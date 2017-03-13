@@ -21,18 +21,18 @@ class MongoHandler(object):
     def __getitem__(self, item):
         return self.client[item]
 
-    def save(self, data, col_name, db=None):
+    def save(self, data, collection, db=None):
         data = [doc.to_dict() for index, doc in data.iterrows()] if isinstance(data, pd.DataFrame) else data
 
         db = self.client[db] if db else self.db
 
-        result = db[col_name].delete_many(
+        result = db[collection].delete_many(
             {'datetime': {'$gte': data[0]['datetime'], '$lte': data[-1]['datetime']}}
         )
 
-        db[col_name].insert(data)
-        db[col_name].create_index('datetime')
-        return [col_name, data[0]['datetime'], data[-1]['datetime'], len(data), result.deleted_count]
+        db[collection].insert(data)
+        db[collection].create_index('datetime')
+        return [collection, data[0]['datetime'], data[-1]['datetime'], len(data), result.deleted_count]
 
     @staticmethod
     def _read(collection, **kwargs):
@@ -49,12 +49,14 @@ class MongoHandler(object):
             data.index = data['datetime']
         except KeyError as ke:
             if '_id' in str(ke):
-                raise KeyError("unable to find required data, please check you data in %s" % collection.full_name)
+                raise KeyError("_id lost, unable to find required data, please check you data in %s" % collection.full_name)
             elif 'datetime' in str(ke):
                 raise KeyError(
                     "data is not in TimeSeries shape, "
                     "please ensure that all documents in %s "
                     "has a key: datetime and with a value of type<datetime>" % collection.full_name)
+            else:
+                raise ke
         return data
 
     def read(self, collection, db=None, start=None, end=None, length=None, **kwargs):
@@ -82,8 +84,14 @@ class MongoHandler(object):
             db = self.client[db] if db else self.db
             panel = {}
             for col in collection:
-                if isinstance(col, (str, unicode)):
-                    panel[col] = self._read(db[col], **kwargs)
-                elif isinstance(col, pymongo.collection.Collection):
-                    panel[col.name] = self._read(col, **kwargs)
+                try:
+                    if isinstance(col, (str, unicode)):
+                        panel[col] = self._read(db[col], **kwargs)
+                    elif isinstance(col, pymongo.collection.Collection):
+                        panel[col.name] = self._read(col, **kwargs)
+                except KeyError as ke:
+                    if 'datetime' in str(ke) or '_id' in str(ke):
+                        pass
+                    else:
+                        raise ke
             return pd.Panel.from_dict(panel)
