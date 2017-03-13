@@ -40,10 +40,10 @@ def advances(candles, hl_period=20, time=datetime.today()):
                 ma_down += 1
 
         except AttributeError as ae:
-            print "%s not supported" % name
-            print ae.message
+            print ("%s not supported" % name)
+            print (ae.message)
         except IndexError:
-            print "length of %s not enough" % name
+            print ("length of %s not enough" % name)
 
     return {'high': high, 'low': low,
             'up': up, 'down': down,
@@ -54,7 +54,7 @@ def advances(candles, hl_period=20, time=datetime.today()):
 def count_advances(panel):
     result = []
     for dt in panel.major_axis:
-        c = advances(candles, time=dt)
+        c = advances(panel, time=dt)
         result.append(c)
         print(c)
 
