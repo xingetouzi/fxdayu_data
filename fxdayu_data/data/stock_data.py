@@ -17,15 +17,10 @@ class StockData(DataCollector):
     def __init__(self, host='localhost', port=27017, db='HS', user={}, **kwargs):
         super(StockData, self).__init__(host=host, port=port, db=db, user=user, **kwargs)
 
-    def save_k_data(
-            self, code=None, start='', end='',
-            ktype='D', autype='qfq', index=False,
-            retry_count=3, pause=0.001
-    ):
+    def save_k_data(self, code=None, start='', end='', ktype='D', autype='qfq', **kwargs):
         frame = tushare.get_k_data(
             code, start, end,
-            ktype, autype, index,
-            retry_count, pause
+            ktype, autype, **kwargs
         )
 
         format_ = '%Y-%m-%d'
