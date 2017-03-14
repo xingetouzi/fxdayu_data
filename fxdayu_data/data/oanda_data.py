@@ -18,7 +18,6 @@ def frame_shape(create_frame, time_index=lambda frame: list(map(datetime.fromtim
 
 
 class OandaAPI(oandapy.API):
-
     @staticmethod
     def time_index(frame):
         return
