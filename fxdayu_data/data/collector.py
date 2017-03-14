@@ -1,7 +1,5 @@
 from base import MongoHandler
 from threading import Thread
-import pandas as pd
-from datetime import datetime
 try:
     from Queue import Queue, Empty
 except ImportError:

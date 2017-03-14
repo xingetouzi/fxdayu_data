@@ -98,12 +98,3 @@ class MongoHandler(object):
                     else:
                         raise ke
             return pd.Panel.from_dict(panel)
-
-    @staticmethod
-    def dt_wrap(trans_func):
-        def datetime_wrap(func):
-            def wrapper(*args, **kwargs):
-                data = func(*args, **kwargs)
-                return trans_func(data)
-            return wrapper
-        return datetime_wrap

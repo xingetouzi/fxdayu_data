@@ -4,6 +4,25 @@ from pandas_datareader.data import YahooDailyReader
 from collector import DataCollector
 
 
+# def dt_trans(function):
+#         def wrapper(*args, **kwargs):
+#             data = function(*args, **kwargs)
+#             data.index = pd.to_datetime(data['date'], format='%Y-%m-%d')
+#             return data
+#
+#         return wrapper
+#
+#
+# class TsWrapper(object):
+#
+#     def __getattr__(self, item):
+#         function = getattr(tushare, item)
+#         return dt_trans(function)
+#
+#
+# ts = TsWrapper()
+
+
 class StockData(DataCollector):
     trans_map = {
         'yahoo': {'Date': 'datetime',
@@ -51,15 +70,14 @@ class StockData(DataCollector):
 
     def save_hs300(
             self, start='', end='',
-            ktype='D', autype='qfq', index=False,
-            retry_count=3, pause=0.001
+            ktype='D', autype='qfq',
+            **kwargs
     ):
         hs300 = tushare.get_hs300s()
         for code in hs300['code']:
             self.save_k_data(
                 code, start, end,
-                ktype, autype, index,
-                retry_count, pause
+                ktype, autype, **kwargs
             )
 
     def save_yahoo(self, symbols=None, db='yahoo', **kwargs):

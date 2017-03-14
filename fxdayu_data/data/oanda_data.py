@@ -17,6 +17,43 @@ def frame_shape(create_frame, time_index=lambda frame: list(map(datetime.fromtim
     return wrapper
 
 
+class OandaAPI(oandapy.API):
+
+    @staticmethod
+    def time_index(frame):
+        return
+
+    def get_history(self, instrument, **params):
+        if isinstance(params.get('start', None), datetime):
+            params['start'] = params['start'].strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+        if isinstance(params.get('end', None), datetime):
+            params['end'] = params['end'].strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+
+        params.setdefault('candleFormat', 'midpoint')
+        params.setdefault('dailyAlignment', 0)
+        params.setdefault('alignmentTimezone', 'UTC')
+
+        data = super(oandapy.API, self).get_history(instrument=instrument, **params)
+
+        for candle in data['candles']:
+            candle['datetime'] = datetime.strptime(candle['time'], '%Y-%m-%dT%H:%M:%S.%fZ')
+
+        return pd.DataFrame(data['candles'])
+
+    def get_eco_calendar(self, instrument, **params):
+        return super(OandaAPI, self).get_eco_calendar(instrument=instrument, **params)
+
+    def get_commitments_of_traders(self, instrument, **params):
+        return super(OandaAPI, self).get_commitments_of_traders(instrument=instrument, **params)[instrument]
+
+    def get_historical_position_ratios(self, instrument, **params):
+        data = super(OandaAPI, self).get_historical_position_ratios(instrument=instrument, **params)
+        columns = ['timestamp', 'long_position_ratio', 'exchange_rate']
+
+        return [dict(list(map(lambda key, value: (key, value), columns, doc)))
+                for doc in data['data'][instrument]['data']]
+
+
 class OandaData(DataCollector):
 
     def __init__(self, oanda_info, host='localhost', port=27017, db='Oanda', user={}, **kwargs):
@@ -190,3 +227,7 @@ class OandaData(DataCollector):
         cal['datetime'] = list(map(datetime.fromtimestamp, cal['timestamp']))
         return cal
 
+if __name__ == '__main__':
+    api = OandaAPI(access_token="5f04b28550036468bc5940e3e901e096-fcce6a0acfa58c9602991783b01a9fc4")
+    # print api.get_history(instrument='EUR_USD', granularity='D', start=datetime(2017, 1, 1), end=datetime.now())
+    print api.get_historical_position_ratios(instrument='EUR_USD')
