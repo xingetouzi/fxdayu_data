@@ -5,7 +5,20 @@ import json
 import oandapy
 
 
+def frame_shape(create_frame, time_index=lambda frame: list(map(datetime.fromtimestamp, frame['timestamp']))):
+    def wrapper(func):
+        def wp(*args, **kwargs):
+
+            data = func(*args, **kwargs)
+            data = create_frame(data, *args, **kwargs)
+            data['datetime'] = time_index(data)
+            return data
+        return wp
+    return wrapper
+
+
 class OandaData(DataCollector):
+
     def __init__(self, oanda_info, host='localhost', port=27017, db='Oanda', user={}, **kwargs):
         """
 
@@ -137,6 +150,8 @@ class OandaData(DataCollector):
             return self.save(self.get_cot(i), col_name)
         elif g == 'HPR':
             return self.save(self.get_hpr(i), col_name)
+        elif g == 'CLD':
+            return self.save(self.get_calender(i), col_name)
         else:
             return self.save_history(i, granularity=g, start=doc['time'], includeFirst=False)
 
@@ -168,3 +183,10 @@ class OandaData(DataCollector):
         cot = pd.DataFrame(cot[instrument])
         cot['datetime'] = list(map(datetime.fromtimestamp, cot['date']))
         return cot
+
+    def get_calender(self, instrument, period=31536000):
+        cal = self.api.get_eco_calendar(instrument=instrument, period=period)
+        cal = pd.DataFrame(cal)
+        cal['datetime'] = list(map(datetime.fromtimestamp, cal['timestamp']))
+        return cal
+

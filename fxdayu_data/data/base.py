@@ -21,9 +21,11 @@ class MongoHandler(object):
     def __getitem__(self, item):
         return self.client[item]
 
-    def save(self, data, collection, db=None):
-        data = [doc.to_dict() for index, doc in data.iterrows()] if isinstance(data, pd.DataFrame) else data
-
+    def save(self, data, collection, db=None, index=False):
+        if isinstance(data, pd.DataFrame):
+            if index:
+                data['datetime'] = data.index
+            data = [doc.to_dict() for index, doc in data.iterrows()]
         db = self.client[db] if db else self.db
 
         result = db[collection].delete_many(
@@ -35,7 +37,7 @@ class MongoHandler(object):
         return [collection, data[0]['datetime'], data[-1]['datetime'], len(data), result.deleted_count]
 
     @staticmethod
-    def _read(collection, **kwargs):
+    def _read(collection, index=True, **kwargs):
         data = list(collection.find(**kwargs))
 
         for key, value in kwargs.get('sort', []):
@@ -46,7 +48,8 @@ class MongoHandler(object):
 
         try:
             data.pop('_id')
-            data.index = data['datetime']
+            if index:
+                data.index = data.pop('datetime')
         except KeyError as ke:
             if '_id' in str(ke):
                 raise KeyError("_id lost, unable to find required data, please check you data in %s" % collection.full_name)
@@ -95,3 +98,12 @@ class MongoHandler(object):
                     else:
                         raise ke
             return pd.Panel.from_dict(panel)
+
+    @staticmethod
+    def dt_wrap(trans_func):
+        def datetime_wrap(func):
+            def wrapper(*args, **kwargs):
+                data = func(*args, **kwargs)
+                return trans_func(data)
+            return wrapper
+        return datetime_wrap

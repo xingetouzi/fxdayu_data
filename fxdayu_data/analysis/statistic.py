@@ -61,7 +61,7 @@ def count_advances(panel, start=1, end=None):
         result.append(c)
         print(c)
 
-    return pd.DataFrame(result)
+    return pd.DataFrame(result).reindex(columns=['datetime', 'high', 'low', 'up', 'down', 'ma_up', 'ma_down', 'left'])
 
 
 def frame_map(frame, mapper):

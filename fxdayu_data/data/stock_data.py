@@ -67,11 +67,10 @@ class StockData(DataCollector):
                 retry_count, pause
             )
 
-    def save_yahoo(self, symbols=None, start=None, end=None, retry_count=3,
-                   pause=0.001, session=None, adjust_price=False, ret_index=False,
-                   chunksize=25, interval='d', db='yahoo'):
-        data = YahooDailyReader(symbols, start, end, retry_count, pause, session,
-                                adjust_price, ret_index, chunksize, interval).read()
-        data['datetime'] = data.index
-
-        self.save(data.rename_axis(self.trans_map['yahoo'], 1), '.'.join((symbols, interval)), db)
+    def save_yahoo(self, symbols=None, db='yahoo', **kwargs):
+        data = YahooDailyReader(symbols, **kwargs).read()
+        self.save(
+            data.rename_axis(self.trans_map['yahoo'], 1),
+            '.'.join((symbols, kwargs.get('interval', 'd'))),
+            db, index=True
+        )
