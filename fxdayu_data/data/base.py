@@ -80,10 +80,16 @@ class MongoHandler(DataHandler):
         elif isinstance(collection, (list, tuple)):
             panel = {}
             for col in collection:
-                if isinstance(col, str):
-                    panel[col] = self._read(db[col], index, **kwargs)
-                elif isinstance(col, database.Collection):
-                    panel[col.name] = self._read(col, index, **kwargs)
+                try:
+                    if isinstance(col, database.Collection):
+                        panel[col.name] = self._read(col, index, **kwargs)
+                    else:
+                        panel[col] = self._read(db[col], index, **kwargs)
+                except KeyError as ke:
+                    if index in str(ke):
+                        pass
+                    else:
+                        raise ke
             return pd.Panel.from_dict(panel)
 
     @staticmethod
