@@ -1,27 +1,36 @@
 from collector import DataCollector
+from fxdayu_data.data.base import MongoHandler
 from datetime import datetime
 import pandas as pd
 import json
 import oandapy
 
 
-def frame_shape(create_frame, time_index=lambda frame: list(map(datetime.fromtimestamp, frame['timestamp']))):
-    def wrapper(func):
-        def wp(*args, **kwargs):
+def frame_shape(function):
+    def frame_wrap(*args, **kwargs):
+        if kwargs.pop('frame', True):
+            return pd.DataFrame(function(*args, **kwargs))
+        else:
+            return function(*args, **kwargs)
 
-            data = func(*args, **kwargs)
-            data = create_frame(data, *args, **kwargs)
-            data['datetime'] = time_index(data)
+    return frame_wrap
+
+
+def time_shape(transfer=datetime.fromtimestamp, source='timestamp', *a, **k):
+    def time_wrapper(function):
+        def wrapper(*args, **kwargs):
+            data = function(*args, **kwargs)
+            for doc in data:
+                doc['datetime'] = transfer(doc[source], *a, **k)
             return data
-        return wp
-    return wrapper
+        return wrapper
+    return time_wrapper
 
 
 class OandaAPI(oandapy.API):
-    @staticmethod
-    def time_index(frame):
-        return
 
+    @frame_shape
+    @time_shape(datetime.strptime, 'time', '%Y-%m-%dT%H:%M:%S.%fZ')
     def get_history(self, instrument, **params):
         if isinstance(params.get('start', None), datetime):
             params['start'] = params['start'].strftime('%Y-%m-%dT%H:%M:%S.%fZ')
@@ -32,21 +41,72 @@ class OandaAPI(oandapy.API):
         params.setdefault('dailyAlignment', 0)
         params.setdefault('alignmentTimezone', 'UTC')
 
-        data = super(oandapy.API, self).get_history(instrument=instrument, **params)
+        if params.pop('all', False):
+            try:
+                return super(oandapy.API, self).get_history(instrument=instrument, **params)['candles']
+            except oandapy.OandaError as oe:
+                if '5000' in str(oe):
+                    if 'start' in params:
+                        return self._get_history(instrument, **params)
+                    else:
+                        raise ValueError('Requires start if count > 5000')
 
-        for candle in data['candles']:
-            candle['datetime'] = datetime.strptime(candle['time'], '%Y-%m-%dT%H:%M:%S.%fZ')
+        else:
+            return super(oandapy.API, self).get_history(instrument=instrument, **params)['candles']
 
-        return pd.DataFrame(data['candles'])
+    def _get_history(self, instrument, **params):
+        if 'count' in params:
+            target = params['count']
+            params['count'] = 5000
+            data = super(oandapy.API, self).get_history(instrument=instrument, **params)['candles']
+            count = target - len(data)
+            params['includeFirst'] = 'false'
+            while count > 5000:
+                params['start'] = data[-1]['time']
+                data.extend(super(oandapy.API, self).get_history(instrument=instrument, **params)['candles'])
+                count = target - len(data)
 
-    def get_eco_calendar(self, instrument, **params):
-        return super(OandaAPI, self).get_eco_calendar(instrument=instrument, **params)
+            if count:
+                params['count'] = count
+                params['start'] = data[-1]['time']
+                data.extend(super(oandapy.API, self).get_history(instrument=instrument, **params)['candles'])
 
-    def get_commitments_of_traders(self, instrument, **params):
-        return super(OandaAPI, self).get_commitments_of_traders(instrument=instrument, **params)[instrument]
+            return data
 
-    def get_historical_position_ratios(self, instrument, **params):
-        data = super(OandaAPI, self).get_historical_position_ratios(instrument=instrument, **params)
+        end = params.pop('end', None)
+        params['count'] = 5000
+
+        data = super(oandapy.API, self).get_history(instrument=instrument, **params)['candles']
+        try:
+            params['start'] = data[-1]['time']
+            params['includeFirst'] = 'false'
+            params['end'] = end
+            next_data = super(oandapy.API, self).get_history(instrument=instrument, **params)['candles']
+        except oandapy.OandaError as oe:
+            if '5000' in str(oe):
+                next_data = self._get_history(instrument, **params)
+            else:
+                return data
+        except IndexError:
+            return data
+
+        data.extend(next_data)
+        return data
+
+    @frame_shape
+    @time_shape()
+    def get_eco_calendar(self, instrument, period=31536000):
+        return super(OandaAPI, self).get_eco_calendar(instrument=instrument, period=period)
+
+    @frame_shape
+    @time_shape(source='date')
+    def get_commitments_of_traders(self, instrument, period=31536000):
+        return super(OandaAPI, self).get_commitments_of_traders(instrument=instrument, period=period)[instrument]
+
+    @frame_shape
+    @time_shape()
+    def get_historical_position_ratios(self, instrument, period=31536000):
+        data = super(OandaAPI, self).get_historical_position_ratios(instrument=instrument, period=period)
         columns = ['timestamp', 'long_position_ratio', 'exchange_rate']
 
         return [dict(list(map(lambda key, value: (key, value), columns, doc)))
@@ -55,6 +115,20 @@ class OandaAPI(oandapy.API):
 
 class OandaData(DataCollector):
 
+    API_MAP = {
+        'HPR': 'get_historical_position_ratios',
+        'CLD': 'get_eco_calendar',
+        'COT': 'get_commitments_of_traders'
+    }
+
+    MAIN_CURRENCY = [
+        'EUR_USD', 'AUD_USD', 'NZD_USD', 'GBP_USD', 'USD_CAD', 'USD_JPY'
+    ]
+
+    default_period = [
+        'M15', 'M30', 'H1', 'H4', 'D', 'M'
+    ]
+
     def __init__(self, oanda_info, host='localhost', port=27017, db='Oanda', user={}, **kwargs):
         """
 
@@ -62,47 +136,20 @@ class OandaData(DataCollector):
         :return:
         """
 
-        super(OandaData, self).__init__(host=host, port=port, db=db, user={}, **kwargs)
+        super(OandaData, self).__init__(MongoHandler(host, port, user, db, **kwargs))
 
         if isinstance(oanda_info, str):
             with open(oanda_info) as info:
                 oanda_info = json.load(info)
                 info.close()
 
-        self.api = oandapy.API(oanda_info['environment'], oanda_info['access_token'])
-        self.time_format = '%Y-%m-%dT%H:%M:%S.%fZ'
-        self.default_period = [
-            'M15', 'M30', 'H1', 'H4', 'D', 'M'
-        ]
-        self.MAIN_CURRENCY = [
-            'EUR_USD', 'AUD_USD', 'NZD_USD', 'GBP_USD', 'USD_CAD', 'USD_JPY'
-        ]
-
-    def get_history(self, instrument, **kwargs):
-        data_type = kwargs.pop('data_type', 'dict')
-        if isinstance(kwargs.get('start', None), datetime):
-            kwargs['start'] = kwargs['start'].strftime('%Y-%m-%dT%H:%M:%S.%fZ')
-        if isinstance(kwargs.get('end', None), datetime):
-            kwargs['end'] = kwargs['end'].strftime('%Y-%m-%dT%H:%M:%S.%fZ')
-
-        kwargs.setdefault('candleFormat', 'midpoint')
-        kwargs.setdefault('dailyAlignment', 0)
-        kwargs.setdefault('alignmentTimezone', 'UTC')
-        print('requiring', kwargs)
-
-        result = self.api.get_history(instrument=instrument, **kwargs)
-
-        for candle in result['candles']:
-            candle['datetime'] = datetime.strptime(candle['time'], '%Y-%m-%dT%H:%M:%S.%fZ')
-
-        if data_type == 'DataFrame':
-            result['candles'] = pd.DataFrame(result['candles'])
-
-        return result
+        self.api = OandaAPI(environment=oanda_info.get('environment', 'practice'),
+                            access_token=oanda_info.get('access_token', None))
 
     def save_history(self, instrument, **kwargs):
+        kwargs['frame'] = False
         try:
-            result = self.get_history(instrument, **kwargs)
+            result = self.api.get_history(instrument, **kwargs)
         except oandapy.OandaError as oe:
             print (oe.message)
             if oe.error_response['code'] == 36:
@@ -110,28 +157,27 @@ class OandaData(DataCollector):
             else:
                 raise oe
 
-        saved = self.save(
-            result['candles'],
-            '.'.join((result['instrument'], result['granularity'])),
+        self.client.inplace(
+            result,
+            '.'.join((instrument, kwargs.get('granularity', 'S5'))),
         )
 
-        return saved
+        return {'start': result[0], 'end': result[-1]}
 
     def save_div(self, instrument, **kwargs):
         if 'start' in kwargs:
             end = kwargs.pop('end', None)
             kwargs['count'] = 5000
-            saved = self.save_history(instrument, **kwargs)
+            result = self.save_history(instrument, **kwargs)
 
             kwargs.pop('count')
             if end:
                 kwargs['end'] = end
-            kwargs['start'] = saved[2]
-            next_saved = self.save_history(instrument, **kwargs)
-            saved[3] += next_saved[3]
-            saved[4] += next_saved[4]
-            saved[2] = next_saved[2]
-            return saved
+            kwargs['start'] = result['end']['time']
+            kwargs['includeFirst'] = 'false'
+            next_result = self.save_history(instrument, **kwargs)
+            result['end'] = next_result['end']
+            return result
         else:
             raise ValueError('In save data mode, start is required')
 
@@ -176,18 +222,14 @@ class OandaData(DataCollector):
         self.save_many(self.MAIN_CURRENCY, self.default_period, start, end)
 
     def update(self, col_name):
-        doc = self.db[col_name].find_one(sort=[('datetime', -1)], projection=['time'])
+        doc = self.client.db[col_name].find_one(sort=[('datetime', -1)], projection=['time'])
         if doc is None:
             raise ValueError('Unable to find the last record or collection: %s, '
                              'please check your DataBase' % col_name)
 
         i, g = col_name.split('.')
-        if g == 'COT':
-            return self.save(self.get_cot(i), col_name)
-        elif g == 'HPR':
-            return self.save(self.get_hpr(i), col_name)
-        elif g == 'CLD':
-            return self.save(self.get_calender(i), col_name)
+        if g in self.API_MAP:
+            return self.save(g, col_name, instrument=i)
         else:
             return self.save_history(i, granularity=g, start=doc['time'], includeFirst=False)
 
@@ -196,7 +238,7 @@ class OandaData(DataCollector):
 
     def update_many(self, col_names=[], t=5):
         if len(col_names) == 0:
-            col_names = self.db.collection_names()
+            col_names = self.client.db.collection_names()
 
         for col_name in col_names:
             self.queue.put({'col_name': col_name})
@@ -205,28 +247,8 @@ class OandaData(DataCollector):
         self.stop()
         self.join()
 
-    def get_hpr(self, instrument, period=31536000, **kwargs):
-        hpr = self.api.get_historical_position_ratios(instrument=instrument, period=period, **kwargs)
-        hpr = pd.DataFrame(
-            hpr['data'][instrument]['data'],
-            columns=['timestamp', 'long_position_ration', 'exchange_rate']
-        )
-        hpr['datetime'] = list(map(datetime.fromtimestamp, hpr['timestamp']))
-        return hpr
-
-    def get_cot(self, instrument, **kwargs):
-        cot = self.api.get_commitments_of_traders(instrument=instrument, **kwargs)
-        cot = pd.DataFrame(cot[instrument])
-        cot['datetime'] = list(map(datetime.fromtimestamp, cot['date']))
-        return cot
-
-    def get_calender(self, instrument, period=31536000):
-        cal = self.api.get_eco_calendar(instrument=instrument, period=period)
-        cal = pd.DataFrame(cal)
-        cal['datetime'] = list(map(datetime.fromtimestamp, cal['timestamp']))
-        return cal
-
-if __name__ == '__main__':
-    api = OandaAPI(access_token="5f04b28550036468bc5940e3e901e096-fcce6a0acfa58c9602991783b01a9fc4")
-    # print api.get_history(instrument='EUR_USD', granularity='D', start=datetime(2017, 1, 1), end=datetime.now())
-    print api.get_historical_position_ratios(instrument='EUR_USD')
+    def save(self, api, collection=None, db=None, **kwargs):
+        kwargs['frame'] = False
+        if collection is None:
+            collection = kwargs['instrument'] + '.' + api
+        self.client.inplace(getattr(self.api, self.API_MAP[api])(**kwargs), collection, db)

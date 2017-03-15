@@ -1,4 +1,3 @@
-from base import MongoHandler
 from threading import Thread
 try:
     from Queue import Queue, Empty
@@ -6,9 +5,9 @@ except ImportError:
     from queue import Queue, Empty
 
 
-class DataCollector(MongoHandler):
-    def __init__(self, host='localhost', port=27017, **settings):
-        super(DataCollector, self).__init__(host, port, **settings)
+class DataCollector(object):
+    def __init__(self, client):
+        self.client = client
 
         self._running = False
         self.queue = Queue()

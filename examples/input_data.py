@@ -10,8 +10,8 @@ def input_hs_stock():
 
 
 def input_hs_300():
-    sd = StockData(db='HS300')
-    sd.save_hs300()
+    sd = StockData(db='hs300')
+    sd.save_stocks('hs300s')
 
 
 def input_yahoo_daily():
@@ -23,10 +23,7 @@ def input_fred():
     from pandas_datareader.data import FredReader
 
     sd = StockData(db='fred')
-    sd.save(
-        FredReader('GDP').read(),
-        'GDP', index=True
-    )
+    sd.client.inplace(FredReader('GDP').read(), 'GDP')
 
 
 def oanda_history():
@@ -42,16 +39,15 @@ def oanda_main():
 def forex_lab():
     od = OandaData("D:\\bigfishtrader\\bigfish_oanda.json", db='ForexLab')
     symbol = 'EUR_USD'
-    lab = {}
-    lab[symbol+'.HPR'] = od.get_hpr(symbol)
-    lab[symbol+'.COT'] = od.get_cot(symbol)
-    lab[symbol+'.CLD'] = od.get_calender(symbol)
-
-    for key, value in lab.items():
-        print value
-        od.save(value, key)
+    od.save('HPR', symbol+'.HPR', instrument=symbol)
+    od.save('CLD', symbol+'.CLD', instrument=symbol)
+    od.save('COT', symbol+'.COT', instrument=symbol)
 
 
 def oanda_update():
     od = OandaData("D:\\bigfishtrader\\bigfish_oanda.json")
     od.update_many()
+
+
+if __name__ == '__main__':
+    forex_lab()
