@@ -43,6 +43,14 @@ class MongoHandler(DataHandler):
                 return self.client[db][collection]
 
     def write(self, data, collection, db=None, index=None):
+        """
+
+        :param data(DataFrame|list(dict)): 要存的数据
+        :param collection(str): 表名
+        :param db(str): 数据库名
+        :param index(str): 以index值建索引, None不建索引
+        :return:
+        """
         collection = self._locate(collection, db)
 
         if isinstance(data, pd.DataFrame):
@@ -55,6 +63,18 @@ class MongoHandler(DataHandler):
             collection.create_index(index)
 
     def read(self, collection, db=None, index='datetime', start=None, end=None, length=None, **kwargs):
+        """
+
+        :param collection(str): 表名
+        :param db(str): 数据库名
+        :param index(str): 读取索引方式
+        :param start(datetime):
+        :param end(datetime):
+        :param length(int):
+        :param kwargs:
+        :return:
+        """
+
         if index:
             if start:
                 fter = {index: {'$gte': start}}
@@ -111,6 +131,16 @@ class MongoHandler(DataHandler):
         return data
 
     def inplace(self, data, collection, db=None, index='datetime'):
+        """
+        以替换的方式存(存入不重复)
+
+        :param data(DataFrame|list(dict)): 要存的数据
+        :param collection(str): 表名
+        :param db(str): 数据库名
+        :param index(str): 默认以datetime为索引替换
+        :return:
+        """
+
         collection = self._locate(collection, db)
 
         if isinstance(data, pd.DataFrame):

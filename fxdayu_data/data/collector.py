@@ -13,13 +13,26 @@ class DataCollector(object):
         self.queue = Queue()
         self._threads = {}
 
+    def multi_process(self, func, param_list, t=5):
+        for param in param_list:
+            self.queue.put(param)
+
+        self.start(func, t)
+        self.stop()
+        self.join()
+
     def run(self, function):
         while self._running or self.queue.qsize():
             try:
                 params = self.queue.get(timeout=1)
             except Empty:
                 continue
-            result = function(**params)
+            try:
+                result = function(**params)
+            except Exception as e:
+                print e
+                continue
+
             if result is not None:
                 print(result)
 

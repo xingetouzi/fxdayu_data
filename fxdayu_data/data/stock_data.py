@@ -1,3 +1,4 @@
+# encoding:utf-8
 import tushare
 import pandas as pd
 from pandas_datareader.data import YahooDailyReader, DataReader
@@ -39,6 +40,11 @@ class StockData(DataCollector):
         return code, 'saved'
 
     def update(self, col_name):
+        """
+
+        :param col_name: 表名
+        :return:
+        """
         doc = self.client.db[col_name].find_one(sort=[('datetime', -1)])
         code, ktype = col_name.split('.')
         try:
@@ -60,6 +66,13 @@ class StockData(DataCollector):
             )
 
     def save_yahoo(self, symbols=None, db='yahoo', **kwargs):
+        """
+
+        :param symbols:
+        :param db:
+        :param kwargs:
+        :return:
+        """
         data = YahooDailyReader(symbols, **kwargs).read()
         self.client.inplace(
             data.rename_axis(self.trans_map['yahoo'], 1),
