@@ -215,14 +215,14 @@ class OandaData(DataCollector):
         if g in self.API_MAP:
             return self.save(g, col_name, instrument=i)
         else:
-            return self.save_history(i, granularity=g, start=doc['time'], includeFirst=False)
+            return self.save_history(i, granularity=g, start=doc['time'], includeFirst='false')
 
     def update_candle(self, i, g, **kwargs):
         return self.save_history(i, granularity=g, **kwargs)
 
     def update_many(self, col_names=[], t=5):
         if len(col_names) == 0:
-            col_names = self.client.db.collection_names()
+            col_names = self.client.table_names()
 
         for col_name in col_names:
             self.queue.put({'col_name': col_name})
