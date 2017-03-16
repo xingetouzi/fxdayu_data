@@ -95,7 +95,7 @@ class MongoHandler(DataHandler):
 
         if isinstance(collection, str):
             return self._read(db[collection], index, **kwargs)
-        elif isinstance(collection, database.Collection):
+        if isinstance(collection, database.Collection):
             return self._read(collection, index, **kwargs)
         elif isinstance(collection, (list, tuple)):
             panel = {}
@@ -111,6 +111,8 @@ class MongoHandler(DataHandler):
                     else:
                         raise ke
             return pd.Panel.from_dict(panel)
+        else:
+            return self._read(db[collection], index, **kwargs)
 
     @staticmethod
     def _read(collection, index=None, **kwargs):
