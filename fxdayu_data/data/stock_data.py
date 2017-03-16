@@ -70,15 +70,15 @@ class StockData(DataCollector):
         :return:
         """
         data = YahooDailyReader(symbols, **kwargs).read()
-        self.client.inplace(
+        return self.client.inplace(
             data.rename_axis(self.trans_map['yahoo'], 1),
             '.'.join((symbols, kwargs.get('interval', 'd'))), db
         )
 
     def update_yahoo(self, db='yahoo'):
-        for col in self.client.table_names():
+        for col in self.client.table_names(db):
             last = self.client.read(col, db, length=1)
             col = str(col)
             index = col.rfind('.')
             code, interval = col[:index], col[index+1:]
-            self.save_yahoo(symbols=code, start=last.index[0], interval=interval)
+            print self.save_yahoo(symbols=code, start=last.index[0], interval=interval)

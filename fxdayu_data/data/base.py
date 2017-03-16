@@ -25,6 +25,7 @@ class DataHandler(object):
     def table_names(self, *args, **kwargs):
         pass
 
+
 class MongoHandler(DataHandler):
 
     def __init__(self, host='localhost', port=27017, users={}, db=None, **kwargs):
@@ -55,14 +56,10 @@ class MongoHandler(DataHandler):
         """
         collection = self._locate(collection, db)
         data = self.normalize(data, index)
-        # if isinstance(data, pd.DataFrame):
-        #     if index and (index not in data.columns):
-        #         data[index] = data.index
-        #     data = [doc.to_dict() for name, doc in data.iterrows()]
-
         collection.insert_many(data)
         if index:
             collection.create_index(index)
+        return {'collection': collection.name, 'start': data[0], 'end': data[-1]}
 
     def read(self, collection, db=None, index='datetime', start=None, end=None, length=None, **kwargs):
         """
@@ -123,7 +120,6 @@ class MongoHandler(DataHandler):
         for key, value in kwargs.get('sort', []):
             if value < 0:
                 data.reverse()
-
         data = pd.DataFrame(data)
 
         if index:
@@ -148,14 +144,10 @@ class MongoHandler(DataHandler):
         collection = self._locate(collection, db)
         data = self.normalize(data, index)
 
-        # if isinstance(data, pd.DataFrame):
-        #     if index not in data.columns:
-        #         data[index] = data.index
-        #     data = [doc.to_dict() for name, doc in data.iterrows()]
-
         collection.delete_many({index: {'$gte': data[0][index], '$lte': data[-1][index]}})
         collection.insert_many(data)
         collection.create_index(index)
+        return {'collection': collection.name, 'start': data[0], 'end': data[-1]}
 
     def update(self, data, collection, db=None, index='datetime', how='$set'):
         collection = self._locate(collection, db)

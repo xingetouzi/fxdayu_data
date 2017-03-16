@@ -28,7 +28,7 @@ class OandaAPI(oandapy.API):
         params.setdefault('dailyAlignment', 0)
         params.setdefault('alignmentTimezone', 'UTC')
 
-        if params.pop('all', False):
+        if params.pop('all', True):
             try:
                 return super(oandapy.API, self).get_history(instrument=instrument, **params)['candles']
             except oandapy.OandaError as oe:
@@ -61,21 +61,21 @@ class OandaAPI(oandapy.API):
             return data
 
         end = params.pop('end', None)
-        params['count'] = 5000
-
+        params['count'] = 4999
         data = super(oandapy.API, self).get_history(instrument=instrument, **params)['candles']
+        print(data[-1])
         try:
             params['start'] = data[-1]['time']
             params['includeFirst'] = 'false'
             params['end'] = end
+            params.pop('count')
             next_data = super(oandapy.API, self).get_history(instrument=instrument, **params)['candles']
         except oandapy.OandaError as oe:
             if '5000' in str(oe):
                 next_data = self._get_history(instrument, **params)
             else:
+                print(oe)
                 return data
-        except IndexError:
-            return data
 
         data.extend(next_data)
         return data
@@ -131,39 +131,11 @@ class OandaData(DataCollector):
                             access_token=oanda_info.get('access_token', None))
 
     def save_history(self, instrument, **kwargs):
-        kwargs['frame'] = False
-        try:
-            result = self.api.get_history(instrument, **kwargs)
-        except oandapy.OandaError as oe:
-            print (oe.message)
-            if oe.error_response['code'] == 36:
-                return self.save_div(instrument, **kwargs)
-            else:
-                raise oe
-
-        self.client.inplace(
+        result = self.api.get_history(instrument, **kwargs)
+        return self.client.inplace(
             result,
             '.'.join((instrument, kwargs.get('granularity', 'S5'))),
         )
-
-        return {'start': result[0], 'end': result[-1]}
-
-    def save_div(self, instrument, **kwargs):
-        if 'start' in kwargs:
-            end = kwargs.pop('end', None)
-            kwargs['count'] = 5000
-            result = self.save_history(instrument, **kwargs)
-
-            kwargs.pop('count')
-            if end:
-                kwargs['end'] = end
-            kwargs['start'] = result['end']['time']
-            kwargs['includeFirst'] = 'false'
-            next_result = self.save_history(instrument, **kwargs)
-            result['end'] = next_result['end']
-            return result
-        else:
-            raise ValueError('In save data mode, start is required')
 
     def save_many(self, instruments, granularity, start, end=None, t=5):
         if isinstance(instruments, list):
@@ -215,7 +187,10 @@ class OandaData(DataCollector):
         if g in self.API_MAP:
             return self.save(g, col_name, instrument=i)
         else:
-            return self.save_history(i, granularity=g, start=doc['time'], includeFirst='false')
+            try:
+                return self.save_history(i, granularity=g, start=doc['time'], end=datetime.now(), includeFirst='false')
+            except IndexError:
+                return '%s already updated to recent' % col_name
 
     def update_candle(self, i, g, **kwargs):
         return self.save_history(i, granularity=g, **kwargs)
@@ -232,7 +207,6 @@ class OandaData(DataCollector):
         self.join()
 
     def save(self, api, collection=None, db=None, **kwargs):
-        kwargs['frame'] = False
         if collection is None:
             collection = kwargs['instrument'] + '.' + api
-        self.client.inplace(getattr(self.api, self.API_MAP[api])(**kwargs), collection, db)
+        return self.client.inplace(getattr(self.api, self.API_MAP[api])(**kwargs), collection, db)
