@@ -24,7 +24,6 @@ class StockData(DataCollector):
             code, start, end,
             ktype, autype, **kwargs
         )
-
         date = frame.pop('date')
 
         try:
@@ -43,15 +42,15 @@ class StockData(DataCollector):
         :param col_name: 表名
         :return:
         """
-        doc = self.client.db[col_name].find_one(sort=[('datetime', -1)])
+        doc = self.client.read(col_name, length=1)
         code, ktype = col_name.split('.')
         try:
-            self.save_k_data(code, start=doc['datetime'].strftime('%Y-%m-%d %H:%M'), ktype=ktype)
-        except IndexError:
+            self.save_k_data(code, start=doc.index[0].strftime('%Y-%m-%d %H:%M'), ktype=ktype)
+        except IndexError as ie:
             print (col_name, 'already updated')
 
     def update_all(self):
-        for collection in self.client.db.collection_names():
+        for collection in self.client.table_names():
             self.update(collection)
 
     def save_stocks(self, pool, start='', end='',
@@ -75,3 +74,11 @@ class StockData(DataCollector):
             data.rename_axis(self.trans_map['yahoo'], 1),
             '.'.join((symbols, kwargs.get('interval', 'd'))), db
         )
+
+    def update_yahoo(self, db='yahoo'):
+        for col in self.client.table_names():
+            last = self.client.read(col, db, length=1)
+            col = str(col)
+            index = col.rfind('.')
+            code, interval = col[:index], col[index+1:]
+            self.save_yahoo(symbols=code, start=last.index[0], interval=interval)

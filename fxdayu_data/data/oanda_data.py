@@ -1,4 +1,5 @@
 from collector import DataCollector
+from fxdayu_data.data.decorators import value_wrapper
 from fxdayu_data.data.base import MongoHandler
 from datetime import datetime
 import pandas as pd
@@ -6,31 +7,17 @@ import json
 import oandapy
 
 
-def frame_shape(function):
-    def frame_wrap(*args, **kwargs):
-        if kwargs.pop('frame', True):
-            return pd.DataFrame(function(*args, **kwargs))
-        else:
-            return function(*args, **kwargs)
-
-    return frame_wrap
-
-
-def time_shape(transfer=datetime.fromtimestamp, source='timestamp', *a, **k):
-    def time_wrapper(function):
-        def wrapper(*args, **kwargs):
-            data = function(*args, **kwargs)
-            for doc in data:
-                doc['datetime'] = transfer(doc[source], *a, **k)
-            return data
-        return wrapper
-    return time_wrapper
+def time_index(transfer=datetime.fromtimestamp, source='timestamp', *a, **k):
+    def shape(result):
+        for doc in result:
+            doc['datetime'] = transfer(doc[source], *a, **k)
+        return result
+    return shape
 
 
 class OandaAPI(oandapy.API):
 
-    @frame_shape
-    @time_shape(datetime.strptime, 'time', '%Y-%m-%dT%H:%M:%S.%fZ')
+    @value_wrapper(time_index(datetime.strptime, 'time', '%Y-%m-%dT%H:%M:%S.%fZ'), pd.DataFrame)
     def get_history(self, instrument, **params):
         if isinstance(params.get('start', None), datetime):
             params['start'] = params['start'].strftime('%Y-%m-%dT%H:%M:%S.%fZ')
@@ -93,18 +80,15 @@ class OandaAPI(oandapy.API):
         data.extend(next_data)
         return data
 
-    @frame_shape
-    @time_shape()
+    @value_wrapper(time_index(), pd.DataFrame)
     def get_eco_calendar(self, instrument, period=31536000):
         return super(OandaAPI, self).get_eco_calendar(instrument=instrument, period=period)
 
-    @frame_shape
-    @time_shape(source='date')
+    @value_wrapper(time_index(source='date'), pd.DataFrame)
     def get_commitments_of_traders(self, instrument, period=31536000):
         return super(OandaAPI, self).get_commitments_of_traders(instrument=instrument, period=period)[instrument]
 
-    @frame_shape
-    @time_shape()
+    @value_wrapper(time_index(), pd.DataFrame)
     def get_historical_position_ratios(self, instrument, period=31536000):
         data = super(OandaAPI, self).get_historical_position_ratios(instrument=instrument, period=period)
         columns = ['timestamp', 'long_position_ratio', 'exchange_rate']

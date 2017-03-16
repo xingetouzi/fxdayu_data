@@ -22,6 +22,8 @@ class DataHandler(object):
     def delete(self, *args, **kwargs):
         pass
 
+    def table_names(self, *args, **kwargs):
+        pass
 
 class MongoHandler(DataHandler):
 
@@ -52,11 +54,11 @@ class MongoHandler(DataHandler):
         :return:
         """
         collection = self._locate(collection, db)
-
-        if isinstance(data, pd.DataFrame):
-            if index and (index not in data.columns):
-                data[index] = data.index
-            data = [doc.to_dict() for name, doc in data.iterrows()]
+        data = self.normalize(data, index)
+        # if isinstance(data, pd.DataFrame):
+        #     if index and (index not in data.columns):
+        #         data[index] = data.index
+        #     data = [doc.to_dict() for name, doc in data.iterrows()]
 
         collection.insert_many(data)
         if index:
@@ -125,7 +127,7 @@ class MongoHandler(DataHandler):
         data = pd.DataFrame(data)
 
         if index:
-            data.index = data[index]
+            data.index = data.pop(index)
 
         if len(data):
             data.pop('_id')
@@ -144,11 +146,12 @@ class MongoHandler(DataHandler):
         """
 
         collection = self._locate(collection, db)
+        data = self.normalize(data, index)
 
-        if isinstance(data, pd.DataFrame):
-            if index not in data.columns:
-                data[index] = data.index
-            data = [doc.to_dict() for name, doc in data.iterrows()]
+        # if isinstance(data, pd.DataFrame):
+        #     if index not in data.columns:
+        #         data[index] = data.index
+        #     data = [doc.to_dict() for name, doc in data.iterrows()]
 
         collection.delete_many({index: {'$gte': data[0][index], '$lte': data[-1][index]}})
         collection.insert_many(data)
@@ -170,4 +173,19 @@ class MongoHandler(DataHandler):
         collection = self._locate(collection, db)
         collection.delete_many(filter)
 
+    def normalize(self, data, index=None):
+        if isinstance(data, pd.DataFrame):
+            if index and (index not in data.columns):
+                data[index] = data.index
+            return [doc[1].to_dict() for doc in data.iterrows()]
+        elif isinstance(data, dict):
+            key, value = list(map(lambda *args: args, *data.iteritems()))
+            return list(map(lambda *args: dict(map(lambda x, y: (x, y), key, args)), *value))
+        else:
+            return data
 
+    def table_names(self, db=None):
+        if not db:
+            return self.db.collection_names()
+        else:
+            return self.client[db].collection_names()
