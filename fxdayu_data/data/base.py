@@ -54,7 +54,7 @@ class MongoHandler(DataHandler):
         collection = self._locate(collection, db)
 
         if isinstance(data, pd.DataFrame):
-            if index:
+            if index and (index not in data.columns):
                 data[index] = data.index
             data = [doc.to_dict() for name, doc in data.iterrows()]
 

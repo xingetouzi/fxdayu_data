@@ -25,14 +25,12 @@ class StockData(DataCollector):
             ktype, autype, **kwargs
         )
 
-        format_ = '%Y-%m-%d'
-        if len(frame['date'].values[-1]) > 11:
-            format_ = ' '.join((format_, '%H:%M'))
+        date = frame.pop('date')
 
-        frame['datetime'] = pd.to_datetime(
-            frame.pop('date'),
-            format=format_
-        )
+        try:
+            frame['datetime'] = pd.to_datetime(date, format='%Y-%m-%d')
+        except TypeError:
+            frame['datetime'] = pd.to_datetime(date, format='%Y-%m-%d %H:%M')
 
         frame.pop('code')
 
@@ -59,11 +57,10 @@ class StockData(DataCollector):
     def save_stocks(self, pool, start='', end='',
                     ktype='D', autype='qfq', **kwargs):
         stock_pool = getattr(tushare, 'get_%s' % pool)()
-        for code in stock_pool['code']:
-            print self.save_k_data(
-                code, start, end,
-                ktype, autype, **kwargs
-            )
+        self.multi_process(
+            self.save_k_data,
+            [([code, start, end, ktype, autype], kwargs) for code in stock_pool['code']]
+        )
 
     def save_yahoo(self, symbols=None, db='yahoo', **kwargs):
         """

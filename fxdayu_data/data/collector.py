@@ -28,7 +28,14 @@ class DataCollector(object):
             except Empty:
                 continue
             try:
-                result = function(**params)
+                if isinstance(params, dict):
+                    result = function(**params)
+                elif isinstance(params, list):
+                    result = function(*params)
+                elif isinstance(params, tuple):
+                    result = function(*params[0], **params[1])
+                else:
+                    result = None
             except Exception as e:
                 print e
                 continue
