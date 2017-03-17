@@ -81,4 +81,4 @@ class StockData(DataCollector):
             col = str(col)
             index = col.rfind('.')
             code, interval = col[:index], col[index+1:]
-            print self.save_yahoo(symbols=code, start=last.index[0], interval=interval)
+            print self.save_yahoo(code, db, start=last.index[0], interval=interval)
