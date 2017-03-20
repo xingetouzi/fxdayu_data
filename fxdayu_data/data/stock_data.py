@@ -3,7 +3,7 @@ import tushare
 import pandas as pd
 from pandas_datareader.data import YahooDailyReader, DataReader
 from collector import DataCollector
-from fxdayu_data.data.base import MongoHandler
+from fxdayu_data.data.handler import MongoHandler
 
 
 class StockData(DataCollector):

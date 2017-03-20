@@ -19,7 +19,8 @@ if __name__ == '__main__':
     candles = mh.read(mh.db.collection_names(), start=datetime(2016, 6, 1))
     candles = frame_map(candles, mapper)
 
-    adv = count_advances(candles, 51)
+    # print advances(candles.loc[:, :datetime(2016, 8, 23, 15)])
+    adv = count_advances(candles, start=50)
     print(adv)
 
 

@@ -33,11 +33,11 @@ def advances(candles, hl_period=20, index=-1):
                 # today_down
                 down += 1
 
-            if candle.iloc[index].ma > candle.iloc[index-1].ma:
-                # ma_today > ma_yesterday
+            if candle.iloc[index].close > candle.iloc[index].ma:
+                # close_today > ma_50
                 ma_up += 1
-            elif candle.iloc[index].ma < candle.iloc[index-1].ma:
-                # ma_today < ma_yesterday
+            elif candle.iloc[index].close < candle.iloc[index].ma:
+                # close_today < ma_50
                 ma_down += 1
             else:
                 left += 1
@@ -54,10 +54,10 @@ def advances(candles, hl_period=20, index=-1):
             'datetime': candles.major_axis[index], 'left': left}
 
 
-def count_advances(panel, start=1, end=None):
+def count_advances(panel, hl_period=20, start=1, end=None):
     result = []
-    for i in range(start, end if end else len(panel.major_axis)):
-        c = advances(panel, index=i)
+    for i in range(max(start, hl_period), end if end else len(panel.major_axis)):
+        c = advances(panel, hl_period, index=i)
         result.append(c)
         print(c)
 
