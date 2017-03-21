@@ -173,6 +173,14 @@ class MongoHandler(DataHandler):
         elif isinstance(data, dict):
             key, value = list(map(lambda *args: args, *data.iteritems()))
             return list(map(lambda *args: dict(map(lambda x, y: (x, y), key, args)), *value))
+        elif isinstance(data, pd.Series):
+            if data.name is None:
+                raise ValueError('name of series: data is None')
+            name = data.name
+            if index is not None:
+                return list(map(lambda k, v: {index: k, name: v}, data.index, data))
+            else:
+                return list(map(lambda v: {data.name: v}, data))
         else:
             return data
 
