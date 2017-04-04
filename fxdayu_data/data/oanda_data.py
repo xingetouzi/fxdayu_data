@@ -17,6 +17,9 @@ def time_index(transfer=datetime.fromtimestamp, source='timestamp', *a, **k):
 
 class OandaAPI(oandapy.API):
 
+    def __init__(self, environment="practice", access_token=None, headers=None):
+        super(OandaAPI, self).__init__(environment, access_token, headers)
+
     @value_wrapper(time_index(datetime.strptime, 'time', '%Y-%m-%dT%H:%M:%S.%fZ'), pd.DataFrame)
     def get_history(self, instrument, **params):
         if isinstance(params.get('start', None), datetime):
@@ -113,7 +116,7 @@ class OandaData(DataCollector):
         'M15', 'M30', 'H1', 'H4', 'D', 'M'
     ]
 
-    def __init__(self, oanda_info, host='localhost', port=27017, db='Oanda', user={}, **kwargs):
+    def __init__(self, oanda_info, host='localhost', port=27017, db='Oanda', user=None, **kwargs):
         """
 
         :param oanda_info: dict, oanda account info {'environment': 'practice', 'access_token': your access_token}
@@ -195,8 +198,9 @@ class OandaData(DataCollector):
     def update_candle(self, i, g, **kwargs):
         return self.save_history(i, granularity=g, **kwargs)
 
-    def update_many(self, col_names=[], t=5):
-        if len(col_names) == 0:
+    def update_many(self, col_names=None, t=5):
+
+        if len(col_names) is None:
             col_names = self.client.table_names()
 
         for col_name in col_names:

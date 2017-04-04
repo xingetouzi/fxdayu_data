@@ -16,7 +16,7 @@ class StockData(DataCollector):
                   'Volume': 'volume'}
     }
 
-    def __init__(self, host='localhost', port=27017, db='HS', user={}, **kwargs):
+    def __init__(self, host='localhost', port=27017, db='HS', user=None, **kwargs):
         super(StockData, self).__init__(MongoHandler(host, port, user, db, **kwargs))
 
     def save_k_data(self, code=None, start='', end='', ktype='D', autype='qfq', **kwargs):

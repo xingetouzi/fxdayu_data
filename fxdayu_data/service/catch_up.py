@@ -38,3 +38,5 @@ def tick2min(frame):
 # 获取当天1min数据(来源tushare:A股)
 today_1min = value_wrapper(time_wrap, tick2min)(tushare.get_today_ticks)
 
+
+get_k_data = value_wrapper(date_wrap)(tushare.get_k_data)

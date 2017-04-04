@@ -11,7 +11,7 @@ OANDA_MAPPER = {'open': 'openMid',
 
 class MarketData(object):
 
-    def __init__(self, client=None, host='localhost', port=27017, users={}, db=None, **kwargs):
+    def __init__(self, client=None, host='localhost', port=27017, users=None, db=None, **kwargs):
         self.client = client if client else MongoHandler(host, port, users, db, **kwargs)
         self.read = self.client.read
         self.write = self.client.write
