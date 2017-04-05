@@ -191,3 +191,4 @@ class MongoHandler(DataHandler):
             return self.db.collection_names()
         else:
             return self.client[db].collection_names()
+
