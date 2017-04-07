@@ -99,7 +99,7 @@ class RedisHandler(DataHandler):
                 pipeline.rpush(self.join(name, key), *item)
         elif isinstance(data, dict):
             for key, value in data.items():
-                if isinstance(value, (str, int, float)):
+                if isinstance(value, (str, int, float, unicode)):
                     pipeline.rpush(self.join(name, key), value)
                 elif isinstance(value, Iterable):
                     pipeline.rpush(self.join(name, key), *value)
@@ -132,12 +132,6 @@ class RedisHandler(DataHandler):
                     self.locate_update(rows.to_dict(), name, loc, pipeline)
             return pipeline.execute()
 
-    def locate_write(self, data, name, loc, pipeline=None):
-        if not pipeline:
-            pipeline = self.client.pipeline()
-
-            pipeline.linsert()
-
     def locate_update(self, data, name, loc, pipeline=None):
         if pipeline is not None:
             for key, value in data.items():
@@ -165,3 +159,8 @@ class RedisHandler(DataHandler):
         if fields is None:
             fields = self.fields
         return self.client.delete(*map(lambda x: self.join(name, x), fields))
+
+
+if __name__ == '__main__':
+    rds = redis.StrictRedis()
+    print rds.info()

@@ -1,35 +1,24 @@
 # encoding:utf-8
 
 
-class DataServer(object):
+class Streamer(object):
 
-    def listen(self, *args, **kwargs):
-        """
-        监听请求
-        :param args:
-        :param kwargs:
-        :return:
-        """
-        raise NotImplementedError("Should implement listen()")
+    def start(self):
+        pass
+
+    def stop(self):
+        pass
+
+    def on_request(self, request):
+        pass
 
 
-class DataClient(object):
+class StreamerHandler(object):
 
-    def request(self, *args, **kwargs):
-        """
-        请求数据
-        :param args:
-        :param kwargs:
-        :return:
-        """
-        raise NotImplementedError("Should implement request()")
+    def set_streamer(self, code, client):
+        pass
 
-    def get(self, *args, **kwargs):
-        """
-        获取数据
-        :param args:
-        :param kwargs:
-        :return:
-        """
-        raise NotImplementedError("Should implement get()")
+    def get_streamer(self, code):
+        pass
+
 
