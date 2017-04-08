@@ -26,7 +26,7 @@ class RemoteRedis(object):
         sk.send(json.dumps({'code': codes}))
 
         result = sk.recv(1024)
-
+        print result
         self.listen(json.loads(result))
 
     def listen(self, result):
@@ -45,7 +45,7 @@ class RemoteRedis(object):
         while self.listening:
             result = next(listen)
             for handler in self.handlers.values():
-                handler(result)
+                handler(result['data'])
 
     def start(self):
         self.listening = True
@@ -62,7 +62,3 @@ class DataClient(RedisHandler, RemoteRedis):
         super(DataClient, self).__init__(redis_client, transformer, **kwargs)
         RemoteRedis.__init__(self)
 
-
-if __name__ == '__main__':
-    dc = DataClient()
-    dc.request(('127.0.0.1', 8080), '000001', '000002', '000003')

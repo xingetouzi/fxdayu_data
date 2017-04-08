@@ -1,6 +1,9 @@
 # encoding:utf-8
 
 
+LOCAL = ('', 8080)
+
+
 class Streamer(object):
 
     def start(self):
