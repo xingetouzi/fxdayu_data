@@ -21,4 +21,6 @@ class StreamerHandler(object):
     def get_streamer(self, code):
         pass
 
+    def config(self):
+        pass
 

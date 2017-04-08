@@ -25,23 +25,16 @@ class RemoteRedis(object):
         sk.connect(address)
         sk.send(json.dumps({'code': codes}))
 
-        results = []
-        while True:
-            result = sk.recv(1024)
-            result = json.loads(result)
-            if result.get('type', 'end') == 'end':
-                break
-            results.append(result)
+        result = sk.recv(1024)
 
-        for result in results:
-            self.listen(result)
+        self.listen(json.loads(result))
 
     def listen(self, result):
         if self.pubsub is None:
             self.client = redis.StrictRedis(**result['config'])
             self.pubsub = self.client.pubsub()
 
-        self.pubsub.subscribe(result)
+        self.pubsub.subscribe(*result['code'])
 
         if not self.listening:
             self.start()
@@ -68,3 +61,8 @@ class DataClient(RedisHandler, RemoteRedis):
     def __init__(self, redis_client=None, transformer=None, **kwargs):
         super(DataClient, self).__init__(redis_client, transformer, **kwargs)
         RemoteRedis.__init__(self)
+
+
+if __name__ == '__main__':
+    dc = DataClient()
+    dc.request(('127.0.0.1', 8080), '000001', '000002', '000003')

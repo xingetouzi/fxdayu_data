@@ -54,10 +54,13 @@ class StockStreamHandler(StreamerHandler):
             streamer = StockStreamer(code, self.conn_pool)
             self._streamers[code] = streamer
 
-        streamer.on_request(client)
-
     def get_streamer(self, code):
         return self._streamers.get(code, None)
+
+    def config(self):
+        config = self.conn_pool.connection_kwargs
+        config['host'] = socket.gethostbyname(socket.gethostname())
+        return config
 
 
 address = ('', 8080)
@@ -74,7 +77,10 @@ class DataRequestHandler(StreamRequestHandler):
                 self.server.set_streamer(c, self.request)
         else:
             self.server.set_streamer(code, self.request)
-        self.request.send(json.dumps({'type': 'end'}))
+            code = [code]
+
+        config = self.server.config()
+        self.request.send(json.dumps({'code': code, 'config': config}))
 
 
 class MarketDataServer(ThreadingTCPServer, StockStreamHandler):
