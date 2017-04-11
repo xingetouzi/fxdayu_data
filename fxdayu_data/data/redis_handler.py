@@ -88,8 +88,12 @@ class RedisHandler(DataHandler):
             else:
                 return [0, -1], index
 
-    def write(self, data, name, index='datetime'):
-        pipeline = self.client.pipeline()
+    def write(self, data, name, index='datetime', pipeline=None):
+        execute = False
+        if pipeline is None:
+            pipeline = self.client.pipeline()
+            execute = True
+
         if isinstance(data, pd.DataFrame):
             if index in data.columns:
                 pipeline.rpush(self.join(name, index), *data[index])
@@ -105,37 +109,47 @@ class RedisHandler(DataHandler):
                     pipeline.rpush(self.join(name, key), *value)
                 else:
                     pipeline.rpush(self.join(name, key), value)
-        return pipeline.execute()
+        if execute:
+            return pipeline.execute()
+        else:
+            return pipeline
 
-    def inplace(self, data, name, index='datetime'):
+    def inplace(self, data, name, index='datetime', pipeline=None):
         if isinstance(data, pd.DataFrame):
             pipeline = self.client.pipeline()
 
             return pipeline.execute()
 
-    def update(self, data, name, index='datetime'):
+    def update(self, data, name, index='datetime', pipeline=None):
         l_range = self.client.lrange(self.join(name, index), 0, -1)
         trans = self.transformer[index]
         if isinstance(data, dict):
             index_value = data.pop(index)
             loc = self.search_sorted(l_range, index_value, trans)
             if trans(l_range[loc]) == index_value:
-                return self.locate_update(data, name, loc)
+                return self.locate_update(data, name, loc, pipeline)
         elif isinstance(data, pd.DataFrame):
             if index in data:
                 data.index = data[index]
 
-            pipeline = self.client.pipeline()
+            execute = False
+            if pipeline is None:
+                pipeline = self.client.pipeline()
+                execute = True
             for index_value, rows in data.iterrows():
                 loc = self.search_sorted(l_range, index_value, trans)
                 if trans(l_range[loc]) == index_value:
                     self.locate_update(rows.to_dict(), name, loc, pipeline)
-            return pipeline.execute()
+            if execute:
+                return pipeline.execute()
+            else:
+                return pipeline
 
-    def locate_update(self, data, name, loc, pipeline=None):
+    def locate_update(self, data, name, loc=-1, pipeline=None):
         if pipeline is not None:
             for key, value in data.items():
                 pipeline.lset(self.join(self.join(name, key)), loc, value)
+            return pipeline
         else:
             pipeline = self.client.pipeline()
             for key, value in data.items():

@@ -15,6 +15,9 @@ class Streamer(object):
     def on_request(self, request):
         pass
 
+    def cancel_request(self, request):
+        pass
+
 
 class StreamerHandler(object):
 

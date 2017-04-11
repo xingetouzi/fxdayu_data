@@ -1,14 +1,73 @@
 # encoding:utf-8
 import tushare
 import pandas as pd
+import numpy as np
 from fxdayu_data.data.decorators import value_wrapper
-from datetime import datetime
+from time import sleep
+from datetime import datetime, time, date
+import requests
+import re
 
 
 CANDLE_MAP = {'open': 'first',
               'high': 'max',
               'low': 'min',
               'close': 'last'}
+
+
+HEADERS = {
+    "Accept": "*/*",
+    "Accept-Encoding": "gzip, deflate, sdch",
+    "Accept-Language": "zh-CN,zh;q=0.8",
+    "Connection": "keep-alive",
+    "Host": "hq.sinajs.cn",
+    "Referer": "http://finance.sina.com.cn/data/",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 "
+                  "(KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36}"}
+
+
+TICK_URL = "http://vip.stock.finance.sina.com.cn/quotes_service/view/CN_TransListV2.php?"
+TICK_PARAMS = "symbol={symbol}&num={num}"
+TICK_FORMAT = """new Array\('(.*?)', '(.*?)', '(.*?)', '(.*?)'\);"""
+TODAY = date.today()
+TICK_COLUNM = ['datetime', 'volume', 'price', 'direction']
+
+
+def time2datetime(t):
+    return datetime.combine(TODAY, time(*map(lambda x: int(x), t.split(':'))))
+
+
+def tick_mapper(args):
+    return [time2datetime(args[0]),
+            int(args[1]),
+            float(args[2]),
+            args[3]]
+
+
+def code_mapper(code):
+    if code.startswith('6'):
+        return 'sh%s' % code
+    elif code.startswith('0') or code.startswith('3'):
+        return 'sz%s' % code
+    else:
+        return code
+
+
+def get_tick_url(**kwargs):
+    kwargs['symbol'] = code_mapper(kwargs.get('symbol', ''))
+    return TICK_URL + '&'.join(["%s=%s" % item for item in kwargs.items()])
+
+
+@value_wrapper(lambda text: re.findall(TICK_FORMAT, text, re.S),
+               lambda args: map(tick_mapper, reversed(args)),
+               lambda ticks: pd.DataFrame(ticks, columns=TICK_COLUNM).set_index('datetime'))
+def get_tick(code, session=None, **kwargs):
+    url = get_tick_url(symbol=code, **kwargs)
+    session = session if session else requests.Session()
+    session.headers = HEADERS
+    request = requests.Request('get', url)
+    response = session.send(request.prepare())
+    return response.text
 
 
 def date_wrap(frame):
@@ -35,8 +94,36 @@ def tick2min(frame):
     return result
 
 
+
 # 获取当天1min数据(来源tushare:A股)
-today_1min = value_wrapper(time_wrap, tick2min)(tushare.get_today_ticks)
-
-
+# today_1min = value_wrapper(time_wrap, tick2min, lambda f: f.dropna())(tushare.get_today_ticks)
+today_1min = value_wrapper(tick2min, lambda f: f.dropna())(get_tick)
 get_k_data = value_wrapper(date_wrap)(tushare.get_k_data)
+
+
+class Total(object):
+
+    def __init__(self):
+        self.count = 0
+
+    def plus(self, x):
+        self.count += x
+        return self.count
+
+t = Total()
+
+
+if __name__ == '__main__':
+    from fxdayu_data.service.sina import QuoteSaver
+
+    qs = QuoteSaver()
+
+    ticks = get_tick('600000')
+    ticks['total'] = map(t.plus, ticks['volume'])
+
+    for dt, tick in ticks.iterrows():
+        pl = qs.client.pipeline()
+        qs.single_update('000001', dt, tick.price, tick.volume, pl)
+        pl.execute()
+        print dt
+

@@ -52,10 +52,9 @@ server_thread = threading.Thread(target=server)
 client_thread = threading.Thread(target=client)
 
 if __name__ == '__main__':
-    server_thread.start()
-    client_thread.start()
-
-    client_thread.join()
-    server_thread.join()
-    # qs = QuoteStreamer('000001.SZ')
-
+    # server_thread.start()
+    # client_thread.start()
+    #
+    # client_thread.join()
+    # server_thread.join()
+    server()
