@@ -176,5 +176,10 @@ class RedisHandler(DataHandler):
 
 
 if __name__ == '__main__':
+    import time
+
     rds = redis.StrictRedis()
-    print rds.info()
+
+    rds.rpush('timelimit', 1)
+
+    # print rds.expireat('timelimit', int(time.time() + 30))

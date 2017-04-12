@@ -15,6 +15,16 @@ def time_index(transfer=datetime.fromtimestamp, source='timestamp', *a, **k):
     return shape
 
 
+def data_transfer(**kwargs):
+    def transfer(result):
+        for doc in result:
+            for key, func in kwargs.items():
+                doc[key] = func(doc[key])
+        return result
+
+    return transfer
+
+
 class OandaAPI(oandapy.API):
 
     def __init__(self, environment="practice", access_token=None, headers=None):
@@ -87,7 +97,7 @@ class OandaAPI(oandapy.API):
     def get_eco_calendar(self, instrument, period=31536000):
         return super(OandaAPI, self).get_eco_calendar(instrument=instrument, period=period)
 
-    @value_wrapper(time_index(source='date'), pd.DataFrame)
+    @value_wrapper(time_index(source='date'), data_transfer(ncl=int, ncs=int, oi=int, price=float), pd.DataFrame)
     def get_commitments_of_traders(self, instrument, period=31536000):
         return super(OandaAPI, self).get_commitments_of_traders(instrument=instrument, period=period)[instrument]
 
@@ -214,3 +224,8 @@ class OandaData(DataCollector):
         if collection is None:
             collection = kwargs['instrument'] + '.' + api
         return self.client.inplace(getattr(self.api, self.API_MAP[api])(**kwargs), collection, db)
+
+
+if __name__ == '__main__':
+    api = OandaAPI(access_token="5e74ab5b965db402fc7f0a883f5e5fa9-bb40c1781c0e7fae3376d5aba35e08ac")
+

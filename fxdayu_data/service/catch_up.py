@@ -63,8 +63,9 @@ def get_tick_url(**kwargs):
                lambda ticks: pd.DataFrame(ticks, columns=TICK_COLUNM).set_index('datetime'))
 def get_tick(code, session=None, **kwargs):
     url = get_tick_url(symbol=code, **kwargs)
-    session = session if session else requests.Session()
-    session.headers = HEADERS
+    if not session:
+        session = session if session else requests.Session()
+        session.headers = HEADERS
     request = requests.Request('get', url)
     response = session.send(request.prepare())
     return response.text
@@ -94,36 +95,7 @@ def tick2min(frame):
     return result
 
 
-
-# 获取当天1min数据(来源tushare:A股)
-# today_1min = value_wrapper(time_wrap, tick2min, lambda f: f.dropna())(tushare.get_today_ticks)
+# 获取当天1min数据
 today_1min = value_wrapper(tick2min, lambda f: f.dropna())(get_tick)
 get_k_data = value_wrapper(date_wrap)(tushare.get_k_data)
-
-
-class Total(object):
-
-    def __init__(self):
-        self.count = 0
-
-    def plus(self, x):
-        self.count += x
-        return self.count
-
-t = Total()
-
-
-if __name__ == '__main__':
-    from fxdayu_data.service.sina import QuoteSaver
-
-    qs = QuoteSaver()
-
-    ticks = get_tick('600000')
-    ticks['total'] = map(t.plus, ticks['volume'])
-
-    for dt, tick in ticks.iterrows():
-        pl = qs.client.pipeline()
-        qs.single_update('000001', dt, tick.price, tick.volume, pl)
-        pl.execute()
-        print dt
 
