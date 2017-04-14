@@ -1,14 +1,17 @@
 # encoding:utf-8
-import requests
-import re
-import pandas as pd
-from datetime import datetime, timedelta
-from datetime import time as d_time
+try:
+    from Queue import Queue, Empty
+except ImportError:
+    from queue import Queue, Empty
 from fxdayu_data.data.redis_handler import RedisHandler
-from fxdayu_data.service.catch_up import today_1min, get_tick
-import time
+from fxdayu_data.service.catch_up import today_1min
+from datetime import time as d_time
+from datetime import datetime
+import pandas as pd
 import threading
-
+import requests
+import time
+import re
 
 
 LIVE_DATA_COLS = ['name', 'open', 'pre_close', 'price', 'high', 'low', 'bid', 'ask', 'volume', 'amount',
@@ -16,37 +19,19 @@ LIVE_DATA_COLS = ['name', 'open', 'pre_close', 'price', 'high', 'low', 'bid', 'a
                   'a1_v', 'a1_p', 'a2_v', 'a2_p', 'a3_v', 'a3_p', 'a4_v', 'a4_p', 'a5_v', 'a5_p', 'date', 'time', 's']
 
 
+def code_transfer(code):
+    if code.startswith('6'):
+        return 'sh' + code
+    elif code.startswith('0') or code.startswith('3'):
+        return 'sz' + code
+    else:
+        return code
+
+
 class QuoteSaver(RedisHandler):
 
     def __init__(self, redis_client=None, transformer=None, **kwargs):
         super(QuoteSaver, self).__init__(redis_client, transformer, **kwargs)
-        self.instance = {}
-
-    def on_quote(self, quotation, publish=True):
-        if isinstance(quotation, pd.DataFrame):
-            pipeline = self.client.pipeline()
-            dt = datetime.now()
-            for name, value in quotation.iteritems():
-                dt = datetime.strptime(value.date+' '+value.time, "%Y-%m-%d %H:%M:%S")
-                self.single_update(name, dt, float(value.price), float(value.volume), pipeline)
-            if publish:
-                pipeline.publish('HS_stocks', dt)
-            pipeline.execute()
-
-    def single_update(self, name, dt, price, volume, pipeline):
-        try:
-            instance = self.instance[name]
-        except KeyError:
-            instance = StockInstance(name, dt, price, volume)
-            self.instance[name] = instance
-            self.write(instance.show(), name, pipeline=pipeline)
-
-        update, value = instance.on_quote(dt, price, volume)
-        if update:
-            self.locate_update(value, name, pipeline=pipeline)
-        else:
-            self.locate_update({'datetime': dt.replace(second=0, microsecond=0)}, name, pipeline=pipeline)
-            self.write(value, name, pipeline=pipeline)
 
     def publish(self, channel, message):
         self.client.publish(channel, message)
@@ -68,7 +53,7 @@ class QuoteSaver(RedisHandler):
 
 class StockInstance(object):
 
-    def __init__(self, code, timestamp, price, volume=0, **kwargs):
+    def __init__(self, code, timestamp, price=0, volume=0, **kwargs):
         self.code = code
         self.datetime = timestamp
         self.open = kwargs.get('open', price)
@@ -102,12 +87,7 @@ class StockInstance(object):
     def on_quote(self, timestamp, price, volume):
         if timestamp.minute != self.datetime.minute:
             self.new(timestamp, price, volume)
-            return False, {'datetime': self.datetime,
-                           'high': self.high,
-                           'low': self.low,
-                           'open': self.open,
-                           'close': self.close,
-                           'volume': self.volume}
+            return False, self.show()
         else:
             self.volume_total = volume
             dct = {'datetime': timestamp, 'close': price, 'volume': self.volume}
@@ -124,34 +104,62 @@ class StockInstance(object):
         for key, value in kwargs.items():
             self.__setattr__(key, value)
 
-    def on_tick(self, timestamp, price, volume):
-        if timestamp.minute != self.datetime.minute:
-            volume = self.volume_total
-            self.new(timestamp, price, volume)
-            return False, {'datetime': self.datetime,
-                           'high': self.high,
-                           'low': self.low,
-                           'open': self.open,
-                           'close': self.close,
-                           'volume': volume}
-        else:
-            self.volume_total += volume
-            dct = {'datetime': timestamp, 'close': price, 'volume': self.volume_total}
-            if price > self.high:
-                dct['high'] = price
-                self.high = price
-            elif price < self.low:
-                dct['low'] = price
-                self.low = price
 
-            return True, dct
+class StockMemory(object):
+    def __init__(self, code, db):
+        self.code = code
+        self.db = db
+        self.instance = None
+
+    def recharge(self):
+        code = self.code
+        candle = self.db.read(code)
+        if len(candle):
+            last_time = candle.index[-1]
+            delta = datetime.now() - last_time
+            min1 = today_1min(code, num=int(delta.seconds/3.2))
+            min1 = min1[min1.index >= last_time]
+            if len(min1) > 1:
+                doc = min1.iloc[0].to_dict()
+                doc['datetime'] = min1.index[0]
+                self.db.locate_update(doc, code)
+                self.db.write(min1.iloc[1:], code)
+                volume = candle.iloc[:-1]['volume'].sum() + min1.iloc[:-1]['volume'].sum()
+                self.prepare_instance(min1.index[-1], volume, **min1.iloc[-1].to_dict())
+            else:
+                self.prepare_instance(last_time, candle.iloc[:-1]['volume'].sum(), **candle.iloc[-1].to_dict())
+
+        else:
+            min1 = today_1min(code)
+            if len(min1):
+                self.db.write(min1, code)
+                self.db.expireat(code, timestamp=int(time.mktime(datetime.today().replace(hour=18).timetuple())))
+                self.prepare_instance(min1.index[-1], min1['volume'].iloc[:-1].sum(), **min1.iloc[-1].to_dict())
+
+    def prepare_instance(self, dt, last_volume=0, **kwargs):
+        self.instance = StockInstance(self.code, dt, **kwargs)
+        if last_volume:
+            self.instance.last_volume = last_volume
+
+    def on_quote(self, timestamp, price, volume, pipeline=None):
+        if self.instance:
+            update, value = self.instance.on_quote(timestamp, price, volume)
+            if update:
+                self.db.locate_update(value, self.code, pipeline=pipeline)
+            else:
+                self.db.locate_update({'datetime': timestamp.replace(second=0)}, self.code, pipeline=pipeline)
+                self.db.write(value, self.code, pipeline=pipeline)
+
+    def shutdown(self):
+        self.instance = None
 
 
 class SinaQuote(object):
 
     url = "http://hq.sinajs.cn/?func=getData._hq_cron();&list="
 
-    def __init__(self, codes, sleep=5):
+    def __init__(self, name, codes, sleep=5.0):
+        self.name = name
         self.codes = codes
         self.sleep = sleep
         self.session = requests.Session()
@@ -164,8 +172,12 @@ class SinaQuote(object):
                                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 "
                                               "(KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36}"}
         self._quoting = False
-        self.quote_url = self.url + ','.join(map(self.coder, codes))
+        self.quote_url = self.url + ','.join(codes)
         self.thread = None
+
+    @property
+    def quoting(self):
+        return self._quoting
 
     def __iter__(self):
         if not self._quoting:
@@ -221,12 +233,23 @@ class SinaQuote(object):
             time.sleep(self.sleep)
 
 
-class QuotesHandler(object):
+class QuotesManager(object):
 
-    def __init__(self, db=None, start=True, **kwargs):
+    class Quest:
+        def __init__(self, function, *args, **kwargs):
+            self.function = function
+            self.args = args
+            self.kwargs = kwargs
+
+        def run(self):
+            return self.function(*self.args, **self.kwargs)
+
+    def __init__(self, db=None, start=True, listen=None, **kwargs):
         self._quoters = {}
         self.lock = threading.RLock()
-        self.ready = {}
+        self.instance = {}
+        self.memories = {}
+        self.queue = Queue()
         if isinstance(db, QuoteSaver):
             self.db = db
         elif isinstance(db, dict):
@@ -244,6 +267,42 @@ class QuotesHandler(object):
         self._trading = False
         if start:
             self.start()
+
+        if listen:
+            if isinstance(listen, dict):
+                self.listen(**listen)
+            elif isinstance(listen, str):
+                import json
+                listen = json.load(open(listen))
+                self.listen(**listen)
+
+    def quote(self, name=None, codes=None, quoter=None):
+        if not quoter:
+            if name and codes:
+                print name, codes
+            else:
+                raise ValueError("Neither of name and codes should be None if quoter is None")
+            try:
+                quoter = self._quoters[name]
+            except KeyError:
+                quoter = SinaQuote(name, codes)
+                self._quoters[name] = quoter
+        else:
+            if quoter.name not in self._quoters:
+                self._quoters[quoter.name] = quoter
+
+        if self._trading:
+            quoter.start(self.on_quote)
+
+        for code in codes:
+            try:
+                memory = self.memories[code]
+            except KeyError:
+                memory = self.memories.setdefault(code, StockMemory(code, self.db))
+
+            self.queue.put(
+                self.Quest(memory.recharge)
+            )
 
     def start(self):
         if not self._monitoring:
@@ -266,29 +325,40 @@ class QuotesHandler(object):
                     self._trading = False
                     self.stop_quoting()
 
+            while self._trading:
+                try:
+                    quest = self.queue.get(timeout=0)
+                except Empty:
+                    break
+
+                try:
+                    quest.run()
+                except Exception as e:
+                    print e
+                    self.queue.put(quest)
+
+            time.sleep(5)
+
         self._trading = False
         self.stop_quoting()
 
     def start_quoting(self):
-        self.lock.acquire()
         for quoter in self._quoters.values():
-            quoter.start(self.db.on_quote)
-        self.lock.release()
+            self.queue.put(
+                self.Quest(self.quote, quoter=quoter)
+            )
 
     def stop_quoting(self):
-        self.lock.acquire()
         for quoter in self._quoters.values():
             quoter.stop()
-        self.lock.release()
+        for memory in self.memories.values():
+            memory.shutdown()
 
-    def request(self, name, *codes):
-        quoter = SinaQuote(codes)
-        self.lock.acquire()
-        self._quoters[name] = quoter
-        self.lock.release()
-
-        if self._trading:
-            quoter.start(self.db.on_quote)
+    def listen(self, **kwargs):
+        for name, codes in kwargs.items():
+            self.queue.put(
+                self.Quest(self.quote, name, codes)
+            )
 
     def is_trading_time(self):
         now = datetime.now().time()
@@ -298,33 +368,20 @@ class QuotesHandler(object):
         else:
             return False
 
-    def check(self, *codes):
-        pass
-
-    def recharge(self, code):
-        candle = self.db.read(code)
-        if len(candle):
-            last_time = candle.index[-1]
-            delta = datetime.now() - last_time
-            min1 = today_1min(code, num=int(delta.seconds/3.2))
-            min1 = min1[min1.index >= last_time]
-            self.db.locate_update(min1.iloc[0].to_dict(), code)
-            self.db.write(min1.iloc[1:], code)
-            volume = candle.iloc[:-1]['volume'].sum() + min1.iloc[:-1]['volume'].sum()
-            instance = StockInstance(code, min1.index[-1], 0, **min1.iloc[-1].to_dict())
-            instance.last_volume = volume
-            self.db.instance[code] = instance
-
-        else:
-            min1 = today_1min(code)
-            self.db.write(min1, code)
-            self.db.expireat(code, timestamp=int(time.mktime(datetime.today().replace(hour=18).timetuple())))
-
-    # def on_quote(self, quotation):
-
+    def on_quote(self, quotation):
+        pl = self.db.client.pipeline()
+        dt = datetime.now()
+        for name, value in quotation.iteritems():
+            try:
+                dt = datetime.strptime(value.date+' '+value.time, "%Y-%m-%d %H:%M:%S")
+                self.memories[name].on_quote(dt, float(value.price), float(value.volume), pl)
+            except Exception as e:
+                print e
+        pl.publish('tick', dt)
+        pl.execute()
 
 
 if __name__ == '__main__':
-    qh = QuotesHandler(start=False)
-    # qh.request('stocks', '000001', '600000', '600036')
-    qh.recharge('600000')
+    import json
+    qm = QuotesManager(listen=json.load(open("sina_stock.json")))
+    # qm = QuotesManager(listen={'stocks': ['sh600000']})

@@ -109,6 +109,9 @@ class RedisHandler(DataHandler):
                     pipeline.rpush(self.join(name, key), *value)
                 else:
                     pipeline.rpush(self.join(name, key), value)
+        else:
+            return pipeline
+
         if execute:
             return pipeline.execute()
         else:

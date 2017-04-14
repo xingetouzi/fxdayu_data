@@ -3,8 +3,7 @@ import tushare
 import pandas as pd
 import numpy as np
 from fxdayu_data.data.decorators import value_wrapper
-from time import sleep
-from datetime import datetime, time, date
+from datetime import datetime, time, date, timedelta
 import requests
 import re
 
@@ -95,7 +94,39 @@ def tick2min(frame):
     return result
 
 
+class TimeRange(object):
+
+    def __init__(self, t, gap=timedelta(minutes=1)):
+        self.gap = gap
+        self.tail = t
+        self.head = t.replace(second=0) if t.second else t - gap
+
+    def roll(self, t):
+        if t <= self.tail and (t > self.head):
+            return self.tail
+        elif t <= self.head:
+            self.head = t.replace(second=0) if t.second else t - self.gap
+            self.tail = self.head + self.gap
+            return self.tail
+        else:
+            return t
+
+    @classmethod
+    def create_index(cls, index):
+        tr = cls(index[-1])
+        return pd.DatetimeIndex(reversed(map(tr.roll, reversed(index))))
+
+
+def tick2min_group(frame):
+    if isinstance(frame, pd.DataFrame):
+        grouper = frame.groupby(TimeRange.create_index)
+        result = grouper['price'].agg(CANDLE_MAP)
+        result['volume'] = grouper['volume'].sum()
+        return result
+
+
 # 获取当天1min数据
-today_1min = value_wrapper(tick2min, lambda f: f.dropna())(get_tick)
+today_1min = value_wrapper(tick2min_group, lambda f: f.dropna())(get_tick)
 get_k_data = value_wrapper(date_wrap)(tushare.get_k_data)
+
 
