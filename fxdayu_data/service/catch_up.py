@@ -33,7 +33,7 @@ TICK_COLUNM = ['datetime', 'volume', 'price', 'direction']
 
 
 def time2datetime(t):
-    return datetime.combine(TODAY, time(*map(lambda x: int(x), t.split(':'))))
+    return datetime.combine(TODAY, time(*map(int, t.split(':'))))
 
 
 def tick_mapper(args):
@@ -127,6 +127,4 @@ def tick2min_group(frame):
 
 # 获取当天1min数据
 today_1min = value_wrapper(tick2min_group, lambda f: f.dropna())(get_tick)
-get_k_data = value_wrapper(date_wrap)(tushare.get_k_data)
-
 

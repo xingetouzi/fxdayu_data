@@ -6,6 +6,15 @@ from collector import DataCollector
 from fxdayu_data.data.handler import MongoHandler
 
 
+def coder(code):
+    if code.startswith("6"):
+        return "sh%s" % code
+    elif code.startswith("3") or code.startswith("0"):
+        return "sz%s" % code
+    else:
+        return code
+
+
 class StockData(DataCollector):
     trans_map = {
         'yahoo': {'Date': 'datetime',
