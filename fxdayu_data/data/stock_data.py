@@ -4,6 +4,8 @@ import pandas as pd
 from pandas_datareader.data import YahooDailyReader, DataReader
 from collector import DataCollector
 from fxdayu_data.data.handler import MongoHandler
+from fxdayu_data.data.sina_tick import today_1min, history_1min, get_slice
+from datetime import date, datetime, timedelta
 
 
 def coder(code):
@@ -91,3 +93,55 @@ class StockData(DataCollector):
             index = col.rfind('.')
             code, interval = col[:index], col[index+1:]
             print self.save_yahoo(code, db, start=last.index[0], interval=interval)
+
+    def save_1min(self, collection, start, end=None, db=None, transfer=None):
+        if transfer:
+            code = transfer(collection)
+        else:
+            code = collection
+        print 'saving %s' % code
+        for frame in self._get_1min(code, start, end):
+            print self.client.inplace(frame, collection, db)
+        print 'finish %s' % code
+
+
+    @staticmethod
+    def _get_1min(code, start, end=None):
+        today = datetime.today()
+        if not end:
+            end = today
+        else:
+            if end > today:
+                end = today
+
+        slicer = get_slice(code)
+
+        while start.date() < end.date():
+            if start.isoweekday() < 6:
+                frame = history_1min(code, start)
+                if len(frame):
+                    yield slicer(frame)
+            start += timedelta(1)
+
+        if today.isoweekday() < 6:
+            if end.date() == today.date() and (today.hour > 18):
+                frame = today_1min(code)
+                if len(frame):
+                    yield slicer(frame)
+
+    def update_1min(self, collection, db=None, transfer=None):
+        current = self.client.read(collection, db, length=1)
+        last = current.index[0]
+        self.save_1min(collection, last+timedelta(1), db=db, transfer=transfer)
+
+    def update_1mins(self, collections=None, db=None, transfer=None):
+        if not collections:
+            collections = self.client.table_names(db)
+
+        for collection in collections:
+            self.update_1min(collection, db, transfer)
+
+
+if __name__ == '__main__':
+    sd = StockData(host='192.168.0.103', port=30000, db='TradeStock')
+    sd.update_1mins()

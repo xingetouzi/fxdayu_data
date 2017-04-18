@@ -370,14 +370,13 @@ class QuotesManager(object):
 
     def on_quote(self, quotation):
         pl = self.db.client.pipeline()
-        dt = datetime.now()
         for name, value in quotation.iteritems():
             try:
                 dt = datetime.strptime(value.date+' '+value.time, "%Y-%m-%d %H:%M:%S")
                 self.memories[name].on_quote(dt, float(value.price), float(value.volume), pl)
             except Exception as e:
                 print e
-        pl.publish('tick', dt)
+        pl.publish('tick', datetime.now())
         pl.execute()
 
 
