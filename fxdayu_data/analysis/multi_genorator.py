@@ -46,6 +46,25 @@ def frame_2_multi_series(frame, names=None):
         raise TypeError('type of frame should be pandas.DataFrame')
 
 
+def frames_2_multi_frame(names=None, **frames):
+    name, frame = frames.popitem()
+    index = multi_exhaust(frame.index, frame.columns)
+    names = names if names else ['datetime', 'code']
+    index.set_names(names)
+
+    dct = {name: np.concatenate(frame.values)}
+    shape = frame.shape
+    for name_, frame_ in frames.items():
+        if frame_.shape == shape:
+            dct[name_] = np.concatenate(frame_.values)
+        else:
+            raise ValueError(
+                'shape not match: shape of %s is %s but shape of %s is %s' % (name_, frame_.shape, name, shape)
+            )
+
+    return pd.DataFrame(dct, index)
+
+
 def tsf_2_multi_frame(time_frame, columns=None, names=None):
     first = []
     second = []
@@ -71,13 +90,3 @@ def make_multi_frame(data, **kwargs):
     return pd.DataFrame(
         results, index
     )
-
-
-if __name__ == '__main__':
-    from fxdayu_data.data import MongoHandler
-    from datetime import datetime
-
-    mh = MongoHandler(db='HS')
-    pl = mh.read(['000001.D', '600000.D'], start=datetime(2016, 1, 1))
-    close = frame_2_multi_series(pl.minor_xs('close'), ['datetime', 'code'])
-    pd.Series()

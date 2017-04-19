@@ -257,16 +257,8 @@ class QuotesManager(object):
         else:
             self.db = QuoteSaver()
 
-        self.morning_start = d_time(9, 30)
-        self.morning_end = d_time(11, 30)
-        self.noon_start = d_time(13)
-        self.noon_end = d_time(15)
-
-        self.main = threading.Thread(target=self.monitor)
-        self._monitoring = False
         self._trading = False
-        if start:
-            self.start()
+        self.main = threading.Thread(target=self.handle_quest)
 
         if listen:
             if isinstance(listen, dict):
@@ -305,68 +297,29 @@ class QuotesManager(object):
             )
 
     def start(self):
-        if not self._monitoring:
-            self._monitoring = True
+        if not self._trading:
+            self._trading = True
             self.main.start()
 
-    def end(self):
-        if self._monitoring:
-            self._monitoring = False
+    def stop(self):
+        if self._trading:
+            self._trading = False
             self.main.join()
 
-    def monitor(self):
-        while self._monitoring:
-            if self.is_trading_time():
-                if not self._trading:
-                    self._trading = True
-                    self.start_quoting()
-            else:
-                if self._trading:
-                    self._trading = False
-                    self.stop_quoting()
+    def handle_quest(self):
+        while self._trading:
+            try:
+                quest = self.queue.get(timeout=5)
+            except Empty:
+                continue
 
-            while self._trading:
-                try:
-                    quest = self.queue.get(timeout=0)
-                except Empty:
-                    break
-
-                try:
-                    quest.run()
-                except Exception as e:
-                    print e
-                    self.queue.put(quest)
-
-            time.sleep(5)
-
-        self._trading = False
-        self.stop_quoting()
-
-    def start_quoting(self):
-        for quoter in self._quoters.values():
-            self.queue.put(
-                self.Quest(self.quote, quoter=quoter)
-            )
-
-    def stop_quoting(self):
-        for quoter in self._quoters.values():
-            quoter.stop()
-        for memory in self.memories.values():
-            memory.shutdown()
+            quest.run()
 
     def listen(self, **kwargs):
         for name, codes in kwargs.items():
             self.queue.put(
                 self.Quest(self.quote, name, codes)
             )
-
-    def is_trading_time(self):
-        now = datetime.now().time()
-        if (now < self.morning_end and (now > self.morning_start)) \
-                or (now < self.noon_end and (now > self.noon_start)):
-            return True
-        else:
-            return False
 
     def on_quote(self, quotation):
         pl = self.db.client.pipeline()
@@ -380,7 +333,57 @@ class QuotesManager(object):
         pl.execute()
 
 
+class Monitor(object):
+
+    def __init__(self, listen=None, start=True, db=None):
+        self.listen = listen
+        self.manager = None
+        self.db = db
+        self._monitoring = False
+
+        self.morning_start = d_time(9, 30)
+        self.morning_end = d_time(11, 30)
+        self.noon_start = d_time(13)
+        self.noon_end = d_time(15)
+
+        self.watcher = threading.Thread(target=self.watch)
+
+    def start(self):
+        if not self._monitoring:
+            self._monitoring = True
+            self.watcher.start()
+
+    def stop(self):
+        if self._monitoring:
+            self._monitoring = False
+            self.watcher.join()
+
+    def watch(self):
+        while self._monitoring:
+            if self.is_trading_time():
+                self.start_quote(self.listen)
+            else:
+                self.stop_quote()
+
+    def is_trading_time(self):
+        now = datetime.now().time()
+        if (now < self.morning_end and (now > self.morning_start)) \
+                or (now < self.noon_end and (now > self.noon_start)):
+            return True
+        else:
+            return False
+
+    def start_quote(self, listen):
+        if not isinstance(getattr(self, 'manager', None), QuotesManager):
+            self.manager = QuotesManager(self.db, listen=listen)
+            self.manager.start()
+
+    def stop_quote(self):
+        if isinstance(getattr(self, 'manager', None), QuotesManager):
+            self.manager.stop()
+            del self.manager
+
+
 if __name__ == '__main__':
-    import json
-    qm = QuotesManager(listen=json.load(open("sina_stock.json")))
-    # qm = QuotesManager(listen={'stocks': ['sh600000']})
+    monitor = Monitor(listen="sina_stock.json")
+    monitor.start()
