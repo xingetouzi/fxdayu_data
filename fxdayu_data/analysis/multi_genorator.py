@@ -90,3 +90,31 @@ def make_multi_frame(data, **kwargs):
     return pd.DataFrame(
         results, index
     )
+
+
+def panel_2_multi_frame(panel, name=None):
+    if isinstance(panel, pd.Panel):
+        index = multi_exhaust(panel.major_axis, panel.items)
+        return pd.DataFrame(
+            {minor: np.concatenate(panel.minor_xs(minor).values) for minor in panel.minor_axis},
+            index=index if not name else index.set_names(name)
+        )
+
+
+def roll_panel(panel, window=1, axis=1):
+    if isinstance(panel, pd.Panel):
+        slicer = [slice(None), slice(None), slice(None)]
+        index = getattr(panel, ['items', 'major_axis', 'minor_axis'][axis])
+        for i in range(window, len(index)):
+            slicer[axis] = slice(i-window, i)
+            yield index[i-1], panel.iloc[tuple(slicer)]
+    else:
+        raise (TypeError("Type of panel should be pandas.Panel"))
+
+
+if __name__ == '__main__':
+    pl = pd.Panel(
+        np.random.random_sample(180).reshape([3, 20, 3]),
+        items=['a', 'b', 'c'],
+        minor_axis=['x', 'y', 'z']
+    )

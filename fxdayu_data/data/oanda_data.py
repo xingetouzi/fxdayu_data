@@ -210,7 +210,7 @@ class OandaData(DataCollector):
 
     def update_many(self, col_names=None, t=5):
 
-        if len(col_names) is None:
+        if col_names is None:
             col_names = self.client.table_names()
 
         for col_name in col_names:

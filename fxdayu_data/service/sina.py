@@ -304,6 +304,8 @@ class QuotesManager(object):
     def stop(self):
         if self._trading:
             self._trading = False
+            for quoter in self._quoters.values():
+                quoter.stop()
             self.main.join()
 
     def handle_quest(self):
