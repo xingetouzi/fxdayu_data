@@ -84,7 +84,7 @@ def tick2min(frame):
         resampler = frame.resample('1min', label='right', closed='right')
         result = resampler['price'].agg(CANDLE_MAP)
         result['volume'] = resampler['volume'].sum()
-        return result
+        return result.dropna()
     except Exception as e:
         print e
         return frame
@@ -163,8 +163,9 @@ def sh_slice(f):
 
 def sz_slice(f):
     c = search(f.index)
-    last = f.iloc[-1, :]
-    return f.iloc[c:-4].append(pd.DataFrame([last.to_dict()], [last.name - timedelta(minutes=1)]))
+    index = f.index
+    index.set_value(index, index[-1], index[-1].replace(minute=0, second=0))
+    return f.iloc[c:]
 
 
 def get_slice(code):
@@ -172,3 +173,4 @@ def get_slice(code):
         return sh_slice
     else:
         return sz_slice
+
