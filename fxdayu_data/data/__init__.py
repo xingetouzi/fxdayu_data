@@ -1,6 +1,5 @@
-try:
-    from fxdayu_data.data.collector.oanda_data import OandaData, OandaAPI
-except ImportError:
-    pass
+from fxdayu_data.data.handler import MongoHandler, RedisHandler
+from fxdayu_data.data.collector import StockData, OandaAPI, OandaData
 
-__all__ = ['MongoHandler', 'OandaData', 'OandaAPI']
+
+__all__ = ['MongoHandler', 'OandaData', 'OandaAPI', "RedisHandler", "StockData"]
