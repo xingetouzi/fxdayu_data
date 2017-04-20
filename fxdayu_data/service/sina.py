@@ -3,15 +3,17 @@ try:
     from Queue import Queue, Empty
 except ImportError:
     from queue import Queue, Empty
-from fxdayu_data.data.redis_handler import RedisHandler
-from fxdayu_data.service.catch_up import today_1min
 from datetime import time as d_time
 from datetime import datetime
-import pandas as pd
 import threading
-import requests
 import time
 import re
+import pandas as pd
+import requests
+
+from fxdayu_data.data.handler.redis_handler import RedisHandler
+# from fxdayu_data.service.catch_up import today_1min
+from fxdayu_data.data.collector.sina_tick import today_1min
 
 
 LIVE_DATA_COLS = ['name', 'open', 'pre_close', 'price', 'high', 'low', 'bid', 'ask', 'volume', 'amount',
@@ -220,6 +222,7 @@ class SinaQuote(object):
             self._quoting = False
             if isinstance(self.thread, threading.Thread):
                 self.thread.join()
+                del self.thread
 
     def stream(self, handler):
         while self._quoting:

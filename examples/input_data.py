@@ -1,28 +1,28 @@
 # encoding:utf-8
 # How to use StockData and OandaData to request and save time series data
-from fxdayu_data.data import StockData, OandaData
+from fxdayu_data.data import market_data, OandaData
 from datetime import datetime
 
 
 def input_hs_stock():
-    sd = StockData(db='HS_Stock')
+    sd = market_data(db='HS_Stock')
     sd.save_k_data('000001.D')
 
 
 def input_hs_300():
-    sd = StockData(db='hs300')
+    sd = market_data(db='hs300')
     sd.save_stocks('hs300s')
 
 
 def input_yahoo_daily():
-    sd = StockData(db='Yahoo')
+    sd = market_data(db='Yahoo')
     sd.save_yahoo(symbols='0700.hk')
 
 
 def input_fred():
     from pandas_datareader.data import FredReader
 
-    sd = StockData(db='fred')
+    sd = market_data(db='fred')
     sd.client.inplace(FredReader('GDP').read(), 'GDP')
 
 

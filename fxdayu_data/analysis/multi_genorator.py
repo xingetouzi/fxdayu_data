@@ -1,21 +1,11 @@
 import pandas as pd
 import numpy as np
 from fxdayu_data.data.decorators import value_wrapper
-
-
-def exhaust(iterable, *iters):
-    if len(iters):
-        for i in iterable:
-            for e in exhaust(*iters):
-                e.insert(0, i)
-                yield e
-    else:
-        for i in iterable:
-            yield [i]
+import itertools
 
 
 def match(iterable, *iters):
-    for ex in map(exhaust, iterable, *iters):
+    for ex in map(itertools.product, iterable, *iters):
         for e in ex:
             yield e
 
@@ -30,16 +20,13 @@ def multi_from_frame(frame):
     return pd.MultiIndex.from_arrays(items, names=names)
 
 
-multi_exhaust = value_wrapper(list, pd.MultiIndex.from_tuples)(exhaust)
 multi_match = value_wrapper(list, pd.MultiIndex.from_tuples)(match)
 
 
 def frame_2_multi_series(frame, names=None):
     if isinstance(frame, pd.DataFrame):
         value = np.concatenate(frame.values)
-        index = multi_exhaust(frame.index, frame.columns)
-        if names:
-            index = index.set_names(names)
+        index = pd.MultiIndex.from_product((frame.index, frame.columns), names=names)
         return pd.Series(value, index)
 
     else:
@@ -48,10 +35,7 @@ def frame_2_multi_series(frame, names=None):
 
 def frames_2_multi_frame(names=None, **frames):
     name, frame = frames.popitem()
-    index = multi_exhaust(frame.index, frame.columns)
-    names = names if names else ['datetime', 'code']
-    index.set_names(names)
-
+    index = pd.MultiIndex((frame.index, frame.columns), names=names)
     dct = {name: np.concatenate(frame.values)}
     shape = frame.shape
     for name_, frame_ in frames.items():
@@ -85,20 +69,20 @@ def tsf_2_multi_frame(time_frame, columns=None, names=None):
 
 
 def make_multi_frame(data, **kwargs):
-    results = {name: np.concatenate(func(data).values) for name, func in kwargs.items()}
-    index = multi_exhaust(data.index, data.columns)
     return pd.DataFrame(
-        results, index
+        {name: np.concatenate(func(data).values) for name, func in kwargs.items()},
+        pd.MultiIndex.from_product([data.index, data.columns])
     )
 
 
-def panel_2_multi_frame(panel, name=None):
+def panel_2_multi_frame(panel, names=None):
     if isinstance(panel, pd.Panel):
-        index = multi_exhaust(panel.major_axis, panel.items)
         return pd.DataFrame(
             {minor: np.concatenate(panel.minor_xs(minor).values) for minor in panel.minor_axis},
-            index=index if not name else index.set_names(name)
+            pd.MultiIndex.from_product((panel.major_axis, panel.items), names=names)
         )
+    else:
+        raise (TypeError("Type of panel should be pandas.Panel"))
 
 
 def roll_panel(panel, window=1, axis=1):
@@ -110,11 +94,3 @@ def roll_panel(panel, window=1, axis=1):
             yield index[i-1], panel.iloc[tuple(slicer)]
     else:
         raise (TypeError("Type of panel should be pandas.Panel"))
-
-
-if __name__ == '__main__':
-    pl = pd.Panel(
-        np.random.random_sample(180).reshape([3, 20, 3]),
-        items=['a', 'b', 'c'],
-        minor_axis=['x', 'y', 'z']
-    )
