@@ -104,7 +104,6 @@ class StockData(DataCollector):
             print self.client.inplace(frame, collection, db)
         print 'finish %s' % code
 
-
     @staticmethod
     def _get_1min(code, start, end=None):
         today = datetime.today()
@@ -144,4 +143,8 @@ class StockData(DataCollector):
 
 if __name__ == '__main__':
     sd = StockData(host='192.168.0.103', port=30000, db='TradeStock')
-    sd.update_1mins()
+    import pymongo
+    for code in pymongo.MongoClient()['HS'].collection_names():
+        code = coder(code)[:-2]
+        print code
+        sd.save_1min(code, datetime(2017, 1, 1))

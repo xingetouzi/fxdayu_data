@@ -1,6 +1,7 @@
 # encoding:utf-8
 from fxdayu_data.data.decorators import value_wrapper
 from datetime import datetime, date, timedelta, time
+from requests import ConnectionError
 import pandas as pd
 import requests
 import re
@@ -29,6 +30,25 @@ HISTORY_FORMAT = "\n%s\n" % "\t".join(['(.*?)']*6)
 TODAY = date.today()
 TICK_COLUMNS = ['time', 'volume', 'price', 'direction']
 HISTORY_TICK_COLUMNS = ['time', 'price', 'change', 'volume', 'amount', 'trend']
+
+
+def reconnect_wrap(retry=3, wait=0.1, default=None, error=ConnectionError):
+    def wrapper(func):
+        def reconnect(*args, **kwargs):
+            rt = retry
+            while rt >= 0:
+                try:
+                    return func(*args, **kwargs)
+                except error:
+                    rt -= 1
+
+            try:
+                return default()
+            except AttributeError:
+                return default
+
+        return reconnect
+    return wrapper
 
 
 def time_wrap(frame, dt, column='time'):
@@ -143,9 +163,9 @@ def get_tick(code, session=None, **kwargs):
 
 
 # 获取当天1min数据
-today_1min = value_wrapper(tick2min_group, lambda f: f.dropna())(get_tick)
+today_1min = reconnect_wrap(default=pd.DataFrame)(value_wrapper(tick2min_group, lambda f: f.dropna())(get_tick))
 # 获取历史1min数据
-history_1min = value_wrapper(tick2min)(history_tick)
+history_1min = reconnect_wrap(default=pd.DataFrame)(value_wrapper(tick2min)(history_tick))
 
 
 def search(index):
@@ -174,3 +194,6 @@ def get_slice(code):
     else:
         return sz_slice
 
+
+if __name__ == '__main__':
+    print get_tick('sh600000').iloc[1830:1870]

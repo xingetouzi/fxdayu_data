@@ -12,8 +12,7 @@ import pandas as pd
 import requests
 
 from fxdayu_data.data.handler.redis_handler import RedisHandler
-# from fxdayu_data.service.catch_up import today_1min
-from fxdayu_data.data.collector.sina_tick import today_1min
+from fxdayu_data.data.collector.sina_tick import today_1min, reconnect_wrap
 
 
 LIVE_DATA_COLS = ['name', 'open', 'pre_close', 'price', 'high', 'low', 'bid', 'ask', 'volume', 'amount',
@@ -192,6 +191,7 @@ class SinaQuote(object):
         else:
             raise StopIteration()
 
+    @reconnect_wrap(default=pd.DataFrame)
     def quote(self, url, **kwargs):
         text = self.session.get(url, **kwargs).text
         return pd.DataFrame(self.standardlize(text), index=LIVE_DATA_COLS)
