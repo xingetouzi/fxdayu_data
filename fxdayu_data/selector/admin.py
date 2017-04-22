@@ -1,6 +1,7 @@
 # encoding:utf-8
 from collections import OrderedDict
 from fxdayu_data.selector.data_api import create_api
+from functools import partial
 
 
 def sort_selector(selectors):
@@ -10,6 +11,10 @@ def sort_selector(selectors):
         dct.setdefault(s.rule, []).append(s)
 
     return dct
+
+
+class Context(object):
+    pass
 
 
 class Admin(object):
@@ -22,17 +27,19 @@ class Admin(object):
 
     def run(self, symbols, start, end):
         import pandas as pd
-        context = object()
+        context = Context()
         api = create_api(symbols, start, end, self.selectors)
         results = []
         index = []
+        on_time = partial(self.on_time, context=context, data=api)
         for time in api.all_time:
-            result = self.on_time(time, context, api)
+            api.set_time(time)
+            result = on_time(time)
             if len(result):
                 index.append(time)
                 results.append(result)
         return pd.Series(results, index)
-    
+
 
 class IntersectionAdmin(Admin):
     def on_time(self, time, context, data):
@@ -40,7 +47,7 @@ class IntersectionAdmin(Admin):
             if rule.match(time):
                 pool = data.can_trade()
                 for selector in selectors:
-                    pool = selector.execute(pool, data)
+                    pool = selector.execute(pool, context, data)
                 context.pool = pool
                 return pool
         else:
@@ -54,7 +61,7 @@ class UnionAdmin(Admin):
                 pool = data.can_trade()
                 result = []
                 for selector in selectors:
-                    result = filter(lambda x: x not in result, selector.execute(pool))
+                    result = filter(lambda x: x not in result, selector.execute(pool, context, data))
                 context.pool = result
                 return result
         else:

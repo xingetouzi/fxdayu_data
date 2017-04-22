@@ -78,7 +78,7 @@ def tick_line_transfer(line):
     return line
 
 
-def dtype_transfer(**kwargs):
+def item_transfer(**kwargs):
     def transfer(frame):
         for item, function in kwargs.items():
             frame[item] = function(frame[item])
@@ -95,7 +95,7 @@ def history_text(code, date_):
 def history_tick(code, date_):
     text = history_text(code, date_)
     tick = pd.DataFrame(re.findall(HISTORY_FORMAT, text, re.S), columns=HISTORY_TICK_COLUMNS)
-    tick = dtype_transfer(price=pd.to_numeric, volume=pd.to_numeric)(tick)
+    tick = item_transfer(price=pd.to_numeric, volume=pd.to_numeric)(tick)
     return time_wrap(tick, date_)
 
 
@@ -158,14 +158,16 @@ def get_tick(code, session=None, **kwargs):
     text = re.findall(TICK_FORMAT, text, re.S)
     today = date.today()
     tick = pd.DataFrame(list(reversed(text)), columns=TICK_COLUMNS)
-    tick = dtype_transfer(volume=pd.to_numeric, price=pd.to_numeric)(tick)
+    tick = item_transfer(volume=pd.to_numeric, price=pd.to_numeric)(tick)
     return time_wrap(tick, today)
 
 
 # 获取当天1min数据
 today_1min = reconnect_wrap(default=pd.DataFrame)(value_wrapper(tick2min_group, lambda f: f.dropna())(get_tick))
 # 获取历史1min数据
-history_1min = reconnect_wrap(default=pd.DataFrame)(value_wrapper(tick2min)(history_tick))
+history_1min = reconnect_wrap(default=pd.DataFrame)(
+    value_wrapper(tick2min, item_transfer(volume=lambda v: 100*v))(history_tick)
+)
 
 
 def search(index):
@@ -196,4 +198,4 @@ def get_slice(code):
 
 
 if __name__ == '__main__':
-    print get_tick('sh600000').iloc[1830:1870]
+    print sz_slice(history_1min('sz000001', datetime(2017, 4, 20)))

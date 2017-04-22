@@ -137,8 +137,11 @@ class StockData(DataCollector):
         if not collections:
             collections = self.client.table_names(db)
 
-        for collection in collections:
-            self.update_1min(collection, db, transfer)
+        if len(collections) < 10:
+            for collection in collections:
+                self.update_1min(collection, db, transfer)
+        else:
+            self.multi_process(self.update_1min, [[col, db, transfer] for col in collections])
 
 
 if __name__ == '__main__':

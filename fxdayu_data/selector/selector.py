@@ -2,18 +2,26 @@
 
 
 class TimeRule(object):
-    def __init__(self, tag=None, **rules):
-        self.rules = rules
+    def __init__(self, tag):
         self.tag = tag
 
     def __hash__(self):
         return hash(self.tag)
 
     def __eq__(self, other):
-        if isinstance(other, TimeRule):
+        if isinstance(other, SimpleRule):
             return self.tag == other.tag
         else:
             return False
+
+    def match(self, time):
+        return True
+
+
+class SimpleRule(TimeRule):
+    def __init__(self, tag=None, **rules):
+        super(SimpleRule, self).__init__(tag)
+        self.rules = rules
 
     def match(self, time):
         for key, value in self.rules.items():
@@ -25,6 +33,12 @@ class TimeRule(object):
                 if v() != value:
                     return False
         return True
+
+
+class CustomRule(TimeRule):
+    def __init__(self, tag=None, func=lambda t: True):
+        super(CustomRule, self).__init__(tag)
+        self.match = func
 
 
 class Selector(object):
@@ -42,7 +56,7 @@ class Selector(object):
         """
         self.name = None
         self.priority = priority
-        self.rule = rule if rule else TimeRule()
+        self.rule = rule if rule else SimpleRule()
         self.context = object()
 
     def __lt__(self, other):
