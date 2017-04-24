@@ -4,10 +4,10 @@ from fxdayu_data.data.market_data import MarketDataFreq
 
 def create_api(symbols, start, end, selectors):
     config = read_config()
-    min_freq = min([Frequency(s.frequency) for s in selectors]).freq
+    min_freq = str(min([Frequency(s.frequency) for s in selectors]))
     db_config = config.get('frequency', {}).get(min_freq, {})
     api = MarketDataFreq(**db_config)
-    api.init(symbols, start, end)
+    api.init(symbols, start, end, frequency=min_freq)
     return api
 
 

@@ -4,7 +4,7 @@ try:
 except ImportError:
     from queue import Queue, Empty
 from datetime import time as d_time
-from datetime import datetime
+from datetime import datetime, timedelta
 import threading
 import time
 import re
@@ -13,6 +13,7 @@ import requests
 
 from fxdayu_data.data.handler.redis_handler import RedisHandler
 from fxdayu_data.data.collector.sina_tick import today_1min, reconnect_wrap
+from fxdayu_data.service.file_log import log_error as logger
 
 
 LIVE_DATA_COLS = ['name', 'open', 'pre_close', 'price', 'high', 'low', 'bid', 'ask', 'volume', 'amount',
@@ -86,12 +87,12 @@ class StockInstance(object):
         return self.volume_total - self.last_volume
 
     def on_quote(self, timestamp, price, volume):
-        if timestamp.minute != self.datetime.minute:
-            self.new(timestamp, price, volume)
+        if timestamp > self.datetime:
+            self.new(timestamp.replace(second=0)+timedelta(minutes=1), price, volume)
             return False, self.show()
         else:
             self.volume_total = volume
-            dct = {'datetime': timestamp, 'close': price, 'volume': self.volume}
+            dct = {'close': price, 'volume': self.volume}
             if price > self.high:
                 dct['high'] = price
                 self.high = price
@@ -148,7 +149,7 @@ class StockMemory(object):
             if update:
                 self.db.locate_update(value, self.code, pipeline=pipeline)
             else:
-                self.db.locate_update({'datetime': timestamp.replace(second=0)}, self.code, pipeline=pipeline)
+                # self.db.locate_update({'datetime': timestamp.replace(second=0)}, self.code, pipeline=pipeline)
                 self.db.write(value, self.code, pipeline=pipeline)
 
     def shutdown(self):
@@ -230,6 +231,7 @@ class SinaQuote(object):
                 quotation = self.next()
             except Exception as e:
                 print e
+                logger(e)
                 continue
 
             handler(quotation)
@@ -334,13 +336,14 @@ class QuotesManager(object):
                 self.memories[name].on_quote(dt, float(value.price), float(value.volume), pl)
             except Exception as e:
                 print e
+                logger(e)
         pl.publish('tick', datetime.now())
         pl.execute()
 
 
 class Monitor(object):
 
-    def __init__(self, listen=None, start=True, db=None):
+    def __init__(self, listen=None, start=True, db=None, logfile=None):
         self.listen = listen
         self.manager = None
         self.db = db
@@ -352,6 +355,12 @@ class Monitor(object):
         self.noon_end = d_time(15)
 
         self.watcher = threading.Thread(target=self.watch)
+
+        if logfile:
+            from functools import partial
+            global logger
+            logger = partial(logger, f_path=logfile)
+
 
     def start(self):
         if not self._monitoring:

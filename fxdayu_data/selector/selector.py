@@ -76,7 +76,7 @@ class Selector(object):
         :param data: 获取市场数据的对象
         :return:
         """
-        raise NotImplementedError("Should implement function execute()")
+        return []
 
     def start(self, pool, context, data):
         """
@@ -97,52 +97,3 @@ class Selector(object):
         :return:
         """
         pass
-
-
-from collections import OrderedDict
-
-
-def sort_selector(selectors):
-    dct = OrderedDict()
-
-    for s in sorted(selectors):
-        dct.setdefault(s.rule, []).append(s)
-
-    return dct
-
-
-class SelectorAdmin(object):
-    def __init__(self, *selectors):
-        self.selectors = sort_selector(selectors)
-
-    def on_time(self, time, context, data):
-        pass
-
-
-class IntersectionAdmin(SelectorAdmin):
-    def on_time(self, time, context, data):
-        for rule, selectors in self.selectors.items():
-            if rule.match(time):
-                pool = data.can_trade()
-                selectors[0].start(pool, context, data)
-                for selector in selectors:
-                    pool = selector.execute(pool, context, data)
-                selectors[0].end(pool, context, data)
-                context.selector_pool = pool
-                return pool
-        return []
-
-
-class UnionAdmin(SelectorAdmin):
-    def on_time(self, time, context, data):
-        for rule, selectors in self.selectors.items():
-            if rule.match(time):
-                pool = data.can_trade()
-                result = []
-                selectors[0].start(pool, context, data)
-                for selector in selectors:
-                    result.extend(filter(lambda x: x not in result, selector.execute(pool, context, data)))
-                selectors[0].end(pool, context, data)
-                context.selector_pool = result
-                return result
-        return []

@@ -163,7 +163,7 @@ def get_tick(code, session=None, **kwargs):
 
 
 # 获取当天1min数据
-today_1min = reconnect_wrap(default=pd.DataFrame)(value_wrapper(tick2min_group, lambda f: f.dropna())(get_tick))
+today_1min = reconnect_wrap(default=pd.DataFrame)(value_wrapper(tick2min, lambda f: f.dropna())(get_tick))
 # 获取历史1min数据
 history_1min = reconnect_wrap(default=pd.DataFrame)(
     value_wrapper(tick2min, item_transfer(volume=lambda v: 100*v))(history_tick)
