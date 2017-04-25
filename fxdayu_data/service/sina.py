@@ -259,6 +259,9 @@ class QuotesManager(object):
             self.db = db
         elif isinstance(db, dict):
             self.db = QuoteSaver(**db)
+        elif isinstance(db, str):
+            import json
+            self.db = QuoteSaver(**json.load(open(db)))
         else:
             self.db = QuoteSaver()
 
