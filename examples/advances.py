@@ -1,4 +1,4 @@
-from fxdayu_data.data import MongoHandler
+from fxdayu_data.data.handler.mongo_handler import MongoHandler
 from fxdayu_data.analysis.statistic import count_advances, frame_map, advances
 from datetime import datetime
 import pandas as pd

@@ -5,7 +5,7 @@ import numpy
 import pandas as pd
 from talib import abstract
 
-from fxdayu_data.data import MongoHandler
+from fxdayu_data.data.handler.mongo_handler import MongoHandler
 
 mh = MongoHandler(port=10001, db='HS')
 

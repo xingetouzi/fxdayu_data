@@ -1,4 +1,4 @@
-from fxdayu_data.data import MongoHandler
+from fxdayu_data.data.handler.mongo_handler import MongoHandler
 from datetime import datetime, timedelta
 import pandas as pd
 from collections import Iterable, defaultdict

@@ -3,7 +3,7 @@ import tushare
 import pandas as pd
 from pandas_datareader.data import YahooDailyReader, DataReader
 from fxdayu_data.data.collector.base import DataCollector
-from fxdayu_data.data.handler import MongoHandler
+from fxdayu_data.data.handler.mongo_handler import MongoHandler
 from fxdayu_data.data.collector.sina_tick import today_1min, history_1min, get_slice
 from datetime import date, datetime, timedelta
 

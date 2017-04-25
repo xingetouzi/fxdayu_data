@@ -1,6 +1,6 @@
 from fxdayu_data.data.collector.base import DataCollector
 from fxdayu_data.data.decorators import value_wrapper
-from fxdayu_data.data.handler import MongoHandler
+from fxdayu_data.data.handler.mongo_handler import MongoHandler
 from datetime import datetime
 import pandas as pd
 import json
