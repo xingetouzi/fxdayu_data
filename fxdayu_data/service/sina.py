@@ -402,5 +402,5 @@ class Monitor(object):
 
 
 if __name__ == '__main__':
-    monitor = Monitor(listen="sina_stock.json")
+    monitor = Monitor(listen="sina_stock.json", db='redis_config.json', logfile='error.log')
     monitor.start()

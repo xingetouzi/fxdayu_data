@@ -61,8 +61,14 @@ class UnionAdmin(Admin):
                 pool = data.can_trade()
                 result = []
                 for selector in selectors:
-                    result = filter(lambda x: x not in result, selector.execute(pool, context, data))
+                    result.extend(filter(lambda x: x not in result, selector.execute(pool, context, data)))
                 context.pool = result
                 return result
         else:
             return []
+
+
+if __name__ == '__main__':
+    import itertools
+
+    itertools.chain()
