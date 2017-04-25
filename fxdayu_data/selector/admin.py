@@ -37,8 +37,8 @@ class Admin(object):
             result = on_time(time)
             if len(result):
                 index.append(time)
-                results.append(result)
-        return pd.Series(results, index)
+                results.append({code: True for code in result})
+        return pd.DataFrame(results, index)
 
 
 class IntersectionAdmin(Admin):
