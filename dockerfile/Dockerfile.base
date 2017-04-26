@@ -1,0 +1,10 @@
+FROM registry.fxdayu.com/miniconda3:3.0
+
+MAINTAINER <541795600@qq.com> BurdenBear
+
+WORKDIR /root
+
+COPY ./requirements.txt requirements.txt
+RUN conda create -n working python=3.6
+RUN source activate working
+RUN pip install -r requirements.txt
