@@ -6,7 +6,6 @@ import pandas as pd
 import redis
 
 
-
 class RedisHandler(DataHandler):
 
     def __init__(self, redis_client=None, transformer=None, **kwargs):
