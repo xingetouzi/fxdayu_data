@@ -5,6 +5,7 @@ except ImportError:
     from queue import Queue, Empty
 from datetime import time as d_time
 from datetime import datetime, timedelta
+from logging import config
 import json
 import logging
 import threading
@@ -378,9 +379,7 @@ class Monitor(object):
         self.watcher = threading.Thread(target=self.watch)
 
         if isinstance(log, str):
-            logging.basicConfig(**json.load(open(log)))
-        elif isinstance(log, dict):
-            logging.basicConfig(**log)
+            config.fileConfig(log)
 
     def start(self):
         if not self._monitoring:
@@ -404,7 +403,6 @@ class Monitor(object):
             if self.timer.tick(datetime.now()):
                 logging.info('monitor running')
 
-
     def is_trading_time(self):
         now = datetime.now().time()
         if (now < self.morning_end and (now > self.morning_start)) \
@@ -425,5 +423,5 @@ class Monitor(object):
 
 
 if __name__ == '__main__':
-    monitor = Monitor(listen="sina_stock.json", log='log_config.json')
+    monitor = Monitor(listen="sina_stock.json", log="logging.conf")
     monitor.start()

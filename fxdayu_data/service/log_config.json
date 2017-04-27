@@ -1,6 +1,0 @@
-{
-  "filename": "service.log",
-  "filemode": "a",
-  "level": 20,
-  "format": "%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s"
-}
