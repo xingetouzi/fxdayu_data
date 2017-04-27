@@ -165,7 +165,6 @@ class RedisHandler(DataHandler):
     def locate_read(self, name, loc, fields=None):
         if fields is None:
             fields = self.fields
-        print loc
         if isinstance(loc, int):
             return {f: self.trans(f, self.client.lindex(self.join(name, f), loc)) for f in fields}
         elif isinstance(loc, slice):

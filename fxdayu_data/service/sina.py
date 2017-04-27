@@ -5,6 +5,8 @@ except ImportError:
     from queue import Queue, Empty
 from datetime import time as d_time
 from datetime import datetime, timedelta
+import json
+import logging
 import threading
 import time
 import re
@@ -13,7 +15,6 @@ import requests
 
 from fxdayu_data.data.handler.redis_handler import RedisHandler
 from fxdayu_data.data.collector.sina_tick import today_1min, reconnect_wrap
-from fxdayu_data.service.file_log import log_error as logger
 
 
 LIVE_DATA_COLS = ['name', 'open', 'pre_close', 'price', 'high', 'low', 'bid', 'ask', 'volume', 'amount',
@@ -149,7 +150,6 @@ class StockMemory(object):
             if update:
                 self.db.locate_update(value, self.code, pipeline=pipeline)
             else:
-                # self.db.locate_update({'datetime': timestamp.replace(second=0)}, self.code, pipeline=pipeline)
                 self.db.write(value, self.code, pipeline=pipeline)
 
     def shutdown(self):
@@ -176,6 +176,7 @@ class SinaQuote(object):
         self._quoting = False
         self.quote_url = self.url + ','.join(codes)
         self.thread = None
+        self.count = 0
 
     @property
     def quoting(self):
@@ -231,10 +232,16 @@ class SinaQuote(object):
                 quotation = self.next()
             except Exception as e:
                 print e
-                logger(e)
+                logging.error(e.message)
                 continue
 
             handler(quotation)
+
+            self.count += 1
+            if self.count > 60:
+                logging.info("received 60 quotes")
+                self.count = 0
+
             time.sleep(self.sleep)
 
 
@@ -260,7 +267,6 @@ class QuotesManager(object):
         elif isinstance(db, dict):
             self.db = QuoteSaver(**db)
         elif isinstance(db, str):
-            import json
             self.db = QuoteSaver(**json.load(open(db)))
         else:
             self.db = QuoteSaver()
@@ -272,7 +278,6 @@ class QuotesManager(object):
             if isinstance(listen, dict):
                 self.listen(**listen)
             elif isinstance(listen, str):
-                import json
                 listen = json.load(open(listen))
                 self.listen(**listen)
 
@@ -339,18 +344,31 @@ class QuotesManager(object):
                 self.memories[name].on_quote(dt, float(value.price), float(value.volume), pl)
             except Exception as e:
                 print e
-                logger(e)
+                logging.error(e.message)
         pl.publish('tick', datetime.now())
         pl.execute()
 
 
 class Monitor(object):
 
-    def __init__(self, listen=None, start=True, db=None, logfile=None):
+    class Timer:
+        def __init__(self, gap=timedelta(minutes=5)):
+            self.gap = gap
+            self.last = datetime.now()
+
+        def tick(self, timestamp):
+            if timestamp - self.last >= self.gap:
+                self.last = timestamp
+                return True
+            else:
+                return False
+
+    def __init__(self, listen=None, start=True, db=None, log=None):
         self.listen = listen
         self.manager = None
         self.db = db
         self._monitoring = False
+        self.timer = self.Timer()
 
         self.morning_start = d_time(9, 30)
         self.morning_end = d_time(11, 30)
@@ -359,21 +377,22 @@ class Monitor(object):
 
         self.watcher = threading.Thread(target=self.watch)
 
-        if logfile:
-            from functools import partial
-            global logger
-            logger = partial(logger, f_path=logfile)
-
+        if isinstance(log, str):
+            logging.basicConfig(**json.load(open(log)))
+        elif isinstance(log, dict):
+            logging.basicConfig(**log)
 
     def start(self):
         if not self._monitoring:
             self._monitoring = True
             self.watcher.start()
+            logging.warning("Activate service")
 
     def stop(self):
         if self._monitoring:
             self._monitoring = False
             self.watcher.join()
+            logging.warning("Deactivate service")
 
     def watch(self):
         while self._monitoring:
@@ -381,6 +400,10 @@ class Monitor(object):
                 self.start_quote(self.listen)
             else:
                 self.stop_quote()
+
+            if self.timer.tick(datetime.now()):
+                logging.info('monitor running')
+
 
     def is_trading_time(self):
         now = datetime.now().time()
@@ -402,5 +425,5 @@ class Monitor(object):
 
 
 if __name__ == '__main__':
-    monitor = Monitor(listen="sina_stock.json", logfile='error.log')
+    monitor = Monitor(listen="sina_stock.json", log='log_config.json')
     monitor.start()
