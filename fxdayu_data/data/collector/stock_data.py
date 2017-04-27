@@ -123,7 +123,7 @@ class StockData(DataCollector):
             start += timedelta(1)
 
         if today.isoweekday() < 6:
-            if end.date() == today.date() and (today.hour > 18):
+            if end.date() == today.date() and (today.hour > 16):
                 frame = today_1min(code)
                 if len(frame):
                     yield slicer(frame)

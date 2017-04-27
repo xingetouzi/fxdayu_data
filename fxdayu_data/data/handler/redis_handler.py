@@ -186,6 +186,9 @@ class RedisHandler(DataHandler):
         for data in self.pubsub.listen():
             function(data['data'])
 
+    def execute(self, command, *args, **kwargs):
+        return self.client.__getattribute__(command)(*args, **kwargs)
+
 if __name__ == '__main__':
     import time
 

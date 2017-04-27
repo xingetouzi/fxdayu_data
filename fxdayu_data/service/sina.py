@@ -136,9 +136,12 @@ class StockMemory(object):
         else:
             min1 = today_1min(code)
             if len(min1):
+                expire = int(time.mktime(datetime.today().replace(hour=18, minute=0).timetuple()))
                 self.db.write(min1, code)
-                self.db.expireat(code, timestamp=int(time.mktime(datetime.today().replace(hour=18).timetuple())))
+                self.db.expireat(code, timestamp=expire)
                 self.prepare_instance(min1.index[-1], min1['volume'].iloc[:-1].sum(), **min1.iloc[-1].to_dict())
+                self.db.client.sadd('index', code)
+                self.db.expireat('index', expire)
 
     def prepare_instance(self, dt, last_volume=0, **kwargs):
         self.instance = StockInstance(self.code, dt, **kwargs)
