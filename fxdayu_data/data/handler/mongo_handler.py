@@ -13,8 +13,8 @@ class MongoHandler(DataHandler):
         self.db = self.client[db] if db else None
 
         if isinstance(users, dict):
-            for db in users:
-                self.client[db].authenticate(users[db]['id'], users[db]['password'])
+            for db_name, config in users.items():
+                self.client[db_name].authenticate(config['name'], config['password'])
 
     def _locate(self, collection, db=None):
         if isinstance(collection, database.Collection):
@@ -97,6 +97,9 @@ class MongoHandler(DataHandler):
 
     @staticmethod
     def _read(collection, index=None, **kwargs):
+        if index:
+            if 'sort' not in kwargs:
+                kwargs['sort'] = [(index, 1)]
         data = list(collection.find(**kwargs))
 
         for key, value in kwargs.get('sort', []):
