@@ -23,6 +23,18 @@ LIVE_DATA_COLS = ['name', 'open', 'pre_close', 'price', 'high', 'low', 'bid', 'a
                   'a1_v', 'a1_p', 'a2_v', 'a2_p', 'a3_v', 'a3_p', 'a4_v', 'a4_p', 'a5_v', 'a5_p', 'date', 'time', 's']
 
 
+def read_json(json_path):
+    try:
+        return json.load(open(json_path))
+    except IOError:
+        import sys
+        path = sys.argv[0]
+        path = path.split('/')
+        path[-1] = json_path
+        path = '/'.join(path)
+        return json.load(open(path))
+
+
 def code_transfer(code):
     if code.startswith('6'):
         return 'sh' + code
@@ -271,7 +283,7 @@ class QuotesManager(object):
         elif isinstance(db, dict):
             self.db = QuoteSaver(**db)
         elif isinstance(db, str):
-            self.db = QuoteSaver(**json.load(open(db)))
+            self.db = QuoteSaver(**read_json(db))
         else:
             self.db = QuoteSaver()
 
@@ -282,8 +294,7 @@ class QuotesManager(object):
             if isinstance(listen, dict):
                 self.listen(**listen)
             elif isinstance(listen, str):
-                listen = json.load(open(listen))
-                self.listen(**listen)
+                self.listen(**read_json(listen))
 
     def quote(self, name=None, codes=None, quoter=None):
         if not quoter:
@@ -426,5 +437,6 @@ class Monitor(object):
 
 
 if __name__ == '__main__':
-    monitor = Monitor(listen="sina_stock.json", log="logging.conf")
-    monitor.start()
+    # monitor = Monitor(listen="sina_stock.json", log="logging.conf")
+    # monitor.start()
+    print read_json("sina_stock.json")
