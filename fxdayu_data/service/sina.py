@@ -13,10 +13,10 @@ import time
 import re
 import pandas as pd
 import requests
+import os
 
 from fxdayu_data.data.handler.redis_handler import RedisHandler
 from fxdayu_data.data.collector.sina_tick import today_1min, reconnect_wrap
-
 
 LIVE_DATA_COLS = ['name', 'open', 'pre_close', 'price', 'high', 'low', 'bid', 'ask', 'volume', 'amount',
                   'b1_v', 'b1_p', 'b2_v', 'b2_p', 'b3_v', 'b3_p', 'b4_v', 'b4_p', 'b5_v', 'b5_p',
@@ -33,7 +33,6 @@ def code_transfer(code):
 
 
 class QuoteSaver(RedisHandler):
-
     def __init__(self, redis_client=None, transformer=None, **kwargs):
         super(QuoteSaver, self).__init__(redis_client, transformer, **kwargs)
 
@@ -56,7 +55,6 @@ class QuoteSaver(RedisHandler):
 
 
 class StockInstance(object):
-
     def __init__(self, code, timestamp, price=0, volume=0, **kwargs):
         self.code = code
         self.datetime = timestamp
@@ -90,7 +88,7 @@ class StockInstance(object):
 
     def on_quote(self, timestamp, price, volume):
         if timestamp > self.datetime:
-            self.new(timestamp.replace(second=0)+timedelta(minutes=1), price, volume)
+            self.new(timestamp.replace(second=0) + timedelta(minutes=1), price, volume)
             return False, self.show()
         else:
             self.volume_total = volume
@@ -121,7 +119,7 @@ class StockMemory(object):
         if len(candle):
             last_time = candle.index[-1]
             delta = datetime.now() - last_time
-            min1 = today_1min(code, num=int(delta.seconds/3.2))
+            min1 = today_1min(code, num=int(delta.seconds / 3.2))
             min1 = min1[min1.index >= last_time]
             if len(min1) > 1:
                 doc = min1.iloc[0].to_dict()
@@ -161,7 +159,6 @@ class StockMemory(object):
 
 
 class SinaQuote(object):
-
     url = "http://hq.sinajs.cn/?func=getData._hq_cron();&list="
 
     def __init__(self, name, codes, sleep=5.0):
@@ -220,7 +217,7 @@ class SinaQuote(object):
             return
         else:
             self._quoting = True
-            self.thread = threading.Thread(target=self.stream, args=(handler, ))
+            self.thread = threading.Thread(target=self.stream, args=(handler,))
             self.thread.start()
 
     def stop(self):
@@ -250,7 +247,6 @@ class SinaQuote(object):
 
 
 class QuotesManager(object):
-
     class Quest:
         def __init__(self, function, *args, **kwargs):
             self.function = function
@@ -344,7 +340,7 @@ class QuotesManager(object):
         pl = self.db.client.pipeline()
         for name, value in quotation.iteritems():
             try:
-                dt = datetime.strptime(value.date+' '+value.time, "%Y-%m-%d %H:%M:%S")
+                dt = datetime.strptime(value.date + ' ' + value.time, "%Y-%m-%d %H:%M:%S")
                 self.memories[name].on_quote(dt, float(value.price), float(value.volume), pl)
             except Exception as e:
                 print e
@@ -354,6 +350,7 @@ class QuotesManager(object):
 
 
 class Monitor(object):
+    CONFIG_ROOT_PATH = os.path.dirname(os.path.abspath(__file__))
 
     class Timer:
         def __init__(self, gap=timedelta(minutes=5)):
@@ -367,8 +364,8 @@ class Monitor(object):
             else:
                 return False
 
-    def __init__(self, listen=None, start=True, db=None, log=None):
-        self.listen = listen
+    def __init__(self, listen=None, db=None, log=None, start=True):
+        self.listen = os.path.join(self.CONFIG_ROOT_PATH, listen)
         self.manager = None
         self.db = db
         self._monitoring = False
