@@ -5,6 +5,7 @@ MAINTAINER <541795600@qq.com> BurdenBear
 WORKDIR /root
 
 COPY ./requirements.txt requirements.txt
-RUN conda create -n working python=3.6
-RUN source activate working
-RUN pip install -r requirements.txt
+RUN conda create -n working python=2.7
+RUN source activate working && pip install -r requirements.txt
+COPY ./docker-entrypoint.sh /root/docker-entrypoint.sh
+ENTRYPOINT ["/root/docker-entrypoint.sh"]
