@@ -367,7 +367,7 @@ class Monitor(object):
     def __init__(self, listen=None, db=None, log=None, start=True):
         self.listen = os.path.join(self.CONFIG_ROOT_PATH, listen)
         self.manager = None
-        self.db = db
+        self.db = os.path.join(self.CONFIG_ROOT_PATH, db)
         self._monitoring = False
         self.timer = self.Timer()
 
@@ -379,7 +379,7 @@ class Monitor(object):
         self.watcher = threading.Thread(target=self.watch)
 
         if isinstance(log, str):
-            config.fileConfig(log)
+            config.fileConfig(os.path.join(self.CONFIG_ROOT_PATH, log))
 
     def start(self):
         if not self._monitoring:
