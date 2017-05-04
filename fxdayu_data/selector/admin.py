@@ -34,11 +34,13 @@ class Admin(object):
         on_time = partial(self.on_time, context=context, data=api)
         for time in api.all_time:
             api.set_time(time)
+            context.current_time = time
             result = on_time(time)
             if len(result):
                 index.append(time)
                 results.append({code: True for code in result})
         return pd.DataFrame(results, index)
+
 
 
 class IntersectionAdmin(Admin):
