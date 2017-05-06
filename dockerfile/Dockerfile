@@ -1,4 +1,4 @@
-FROM registry.fxdayu.com/fxdayu_data_base:1.0
+FROM registry.fxdayu.com/fxdayu_data_base
 
 COPY . /root/fxdayu_data/
 
