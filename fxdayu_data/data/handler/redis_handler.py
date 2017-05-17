@@ -189,6 +189,23 @@ class RedisHandler(DataHandler):
     def execute(self, command, *args, **kwargs):
         return self.client.__getattribute__(command)(*args, **kwargs)
 
+    def publish(self, channel, message):
+        self.client.publish(channel, message)
+
+    def expire(self, name, ttl):
+        fields = self.fields
+        pl = self.client.pipeline()
+        for field in fields:
+            pl.expire('%s:%s' % (name, field), ttl)
+        pl.execute()
+
+    def expireat(self, name, timestamp):
+        fields = self.fields
+        pl = self.client.pipeline()
+        for field in fields:
+            pl.expireat('%s:%s' % (name, field), timestamp)
+        pl.execute()
+
 if __name__ == '__main__':
     import time
 
