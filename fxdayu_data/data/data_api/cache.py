@@ -9,11 +9,9 @@ class OutRangeException(Exception):
 
 class CandleCache(object):
 
-    FIELDS = ("open", "high", "low", "close", "volume")
-
     def __init__(self):
         self.dct = {}
-        self.panel = None
+        self.panel = pd.Panel()
 
     def read(self, code=None, fields=None, start=None, end=None, length=None):
         if isinstance(code, (str, unicode)):
@@ -82,3 +80,43 @@ class CandleCache(object):
                         return e
             else:
                 return slice(None, e)
+
+    def put(self, frames):
+        for name, frame in frames.items():
+            f = self.dct.get(name, None)
+            if f is not None:
+                self.dct[name] = pd.concat((f, frame))
+            else:
+                self.dct[name] = frame
+
+        self.panel = pd.Panel.from_dict(self.dct)
+
+    def pop(self, end):
+        for name, frame in self.dct.items():
+            self.dct[name] = frame[frame.index > end]
+
+        self.panel = self.panel.iloc[:, self._slice(self.panel.major_axis, end, None, None), :]
+
+
+if __name__ == '__main__':
+    from fxdayu_data.analysis.random_data import random_panel
+    from datetime import datetime
+
+    minor = ['open', 'high']
+    item = ['000001', '000002']
+    index1 = pd.date_range(datetime(2016, 1, 1), datetime(2016, 1, 31))
+    index2 = pd.date_range(datetime(2016, 2, 1), datetime(2016, 2, 28))
+    index3 = pd.date_range(datetime(2016, 3, 1), datetime(2016, 3, 31))
+
+    pl1 = random_panel(item, index1, minor)
+    pl2 = random_panel(item, index2, minor)
+    pl3 = random_panel(item, index3, minor)
+
+    cache = CandleCache()
+    cache.put({name: frame for name, frame in pl1.iteritems()})
+    cache.put({name: frame for name, frame in pl2.iteritems()})
+    cache.put({name: frame for name, frame in pl3.iteritems()})
+    cache.pop(datetime(2016, 1, 31))
+
+    print cache.read(fields='high', length=4)
+
