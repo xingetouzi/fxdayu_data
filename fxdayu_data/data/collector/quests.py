@@ -31,6 +31,10 @@ class QuestHandler(object):
         self._threads = {}
         self._running = False
 
+    @classmethod
+    def iter_run(cls, function, iters, how=SINGLE, t=5):
+        cls().iter_put(function, iters, how).start(t)
+
     def partial_put(self, function, partials, iters, how):
         args, kwargs = how(partials)
         func = partial(function, *args, **kwargs)
@@ -39,7 +43,7 @@ class QuestHandler(object):
 
     def iter_put(self, function, iters, how=SINGLE):
         for item in iters:
-            args, kwargs = how(item)
+            args, kwargs = how(item) 
             self.queue.put(
                 Quest(function, *args, **kwargs)
             )
