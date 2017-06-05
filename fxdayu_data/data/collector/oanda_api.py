@@ -33,6 +33,11 @@ class OandaAPI(oandapy.API):
     def __init__(self, environment="practice", access_token=None, headers=None):
         super(OandaAPI, self).__init__(environment, access_token, headers)
 
+    @classmethod
+    def read_config(cls, config):
+        import json
+        return cls(**json.load(open(config)))
+
     @value_wrapper(pd.DataFrame, set_time_index)
     def get_history(self, instrument, **params):
         if isinstance(params.get('start', None), datetime):

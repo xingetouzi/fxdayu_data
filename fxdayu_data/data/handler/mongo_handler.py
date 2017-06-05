@@ -16,6 +16,11 @@ class MongoHandler(DataHandler):
             for db_name, config in users.items():
                 self.client[db_name].authenticate(config['name'], config['password'])
 
+    @classmethod
+    def read_config(cls, config):
+        import json
+        return cls(**json.load(open(config)))
+
     def _locate(self, collection, db=None):
         if isinstance(collection, database.Collection):
             return collection
@@ -107,11 +112,10 @@ class MongoHandler(DataHandler):
                 data.reverse()
         data = pd.DataFrame(data)
 
-        if index:
-            data.index = data.pop(index)
-
         if len(data):
             data.pop('_id')
+            if index:
+                data.index = data.pop(index)
 
         return data
 

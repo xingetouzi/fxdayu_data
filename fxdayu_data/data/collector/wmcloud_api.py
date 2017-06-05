@@ -67,7 +67,3 @@ class Client(object):
         else:
             return fields
 
-
-if __name__ == '__main__':
-    client = Client('D:/fxdayu/fxdayu/data/wmcloud_account.json')
-    print client.request('getSecID', field='secID', ticker='IF1701', assetClass='fu')

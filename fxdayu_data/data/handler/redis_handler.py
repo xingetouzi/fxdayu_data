@@ -205,12 +205,3 @@ class RedisHandler(DataHandler):
         for field in fields:
             pl.expireat('%s:%s' % (name, field), timestamp)
         pl.execute()
-
-if __name__ == '__main__':
-    import time
-
-    rds = redis.StrictRedis()
-
-    rds.rpush('timelimit', 1)
-
-    # print rds.expireat('timelimit', int(time.time() + 30))
