@@ -22,7 +22,7 @@ def save_history(handler, function, symbol, granularity, **kwargs):
 
 
 def save_histories(handler, function, symbols, granularities, **kwargs):
-    QuestHandler().iter_put(
+    QuestHandler().put_iter(
         partial(save_history, handler, function, **kwargs),
         product(symbols, granularities),
         ARGS
@@ -39,18 +39,6 @@ def save(handler, name, function, symbol, **kwargs):
 def save_many(handler, symbols, t=5, **functions):
     qh = QuestHandler()
     for name, function in functions.items():
-        qh.iter_put(partial(save, handler, name, function), symbols)
+        qh.put_iter(partial(save, handler, name, function), symbols)
     qh.start(t)
 
-
-if __name__ == '__main__':
-    from fxdayu_data.data.collector.oanda_api import OandaAPI
-    from fxdayu_data.data.handler.mongo_handler import MongoHandler
-    from datetime import datetime
-
-    api = OandaAPI.read_config("OandaUser.json")
-    handler = MongoHandler()
-    save_histories(handler, api.range_history,
-                   ['EUR_USD', "GBP_USD"],
-                   ['M1', 'M15'],
-                   start=datetime(2017, 2, 1), end=datetime(2017, 3, 1))

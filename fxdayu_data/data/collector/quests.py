@@ -32,30 +32,27 @@ class QuestHandler(object):
         self._running = False
 
     @classmethod
-    def iter_run(cls, function, iters, how=SINGLE, t=5):
-        cls().iter_put(function, iters, how).start(t)
+    def run_quests(cls, quests, t=5):
+        qh = cls()
+        for quest in quests:
+            qh.put(quest)
+        qh.start(t)
 
-    def partial_put(self, function, partials, iters, how):
-        args, kwargs = how(partials)
-        func = partial(function, *args, **kwargs)
-        self.iter_put(func, iters, how)
-        return self
+    @classmethod
+    def run_iter(cls, function, iters, how=SINGLE, t=5):
+        cls().put_iter(function, iters, how).start(t)
 
-    def iter_put(self, function, iters, how=SINGLE):
+    def put_iter(self, function, iters, how=SINGLE):
         for item in iters:
-            args, kwargs = how(item) 
-            self.queue.put(
-                Quest(function, *args, **kwargs)
-            )
+            args, kwargs = how(item)
+            self.put_function(function, *args, **kwargs)
         return self
 
-    def put_quest(self, function, *args, **kwargs):
+    def put_function(self, function, *args, **kwargs):
         self.queue.put(Quest(function, *args, **kwargs))
-        return self
 
     def put(self, quest):
         self.queue.put(quest)
-        return self
 
     @property
     def running(self):
@@ -75,8 +72,12 @@ class QuestHandler(object):
     def stop(self):
         self._running = False
         self.join()
-        while len(self._threads):
-            self._threads.popitem()
+        self.clear()
+
+    def clear(self):
+        for name, thread in self._threads.copy().items():
+            if not thread.is_alive:
+                self._threads.pop(name)
 
     def run(self):
         while self._running:
