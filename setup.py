@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="fxdayu_data",
-    version="0.0.1",
+    version="0.1.0",
     packages=["fxdayu_data",
               "fxdayu_data.data",
               "fxdayu_data.data.handler",

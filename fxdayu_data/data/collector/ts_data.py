@@ -37,7 +37,7 @@ def save_k_datas(handler, codes, t=5, **kwargs):
     from functools import partial
 
     func = partial(save_k_data, handler, **kwargs)
-    QuestHandler().iter_put(func, codes).start(t)
+    QuestHandler().put_iter(func, codes).start(t)
 
 
 def update_k_all(handler, t=5, **kwargs):
@@ -45,7 +45,7 @@ def update_k_all(handler, t=5, **kwargs):
     from functools import partial
 
     func = partial(update_k_data, handler, **kwargs)
-    QuestHandler().iter_put(func, handler.table_names()).start(t)
+    QuestHandler().put_iter(func, handler.table_names()).start(t)
 
 
 def iter_1min(code, start, end=None):
@@ -88,7 +88,7 @@ def save_1mins(handler, codes, t=5, *args, **kwargs):
     from functools import partial
 
     func = partial(save_1min, handler, *args, **kwargs)
-    QuestHandler().iter_put(func, codes).start(t)
+    QuestHandler().put_iter(func, codes).start(t)
 
 
 def update_1mins(handler, codes=None, t=5, *args, **kwargs):
@@ -99,5 +99,5 @@ def update_1mins(handler, codes=None, t=5, *args, **kwargs):
         codes = handler.table_names()
 
     func = partial(update_1min, handler, *args, **kwargs)
-    QuestHandler().iter_put(func, codes).start(t)
+    QuestHandler().put_iter(func, codes).start(t)
 
