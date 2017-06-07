@@ -14,5 +14,6 @@ except ImportError:
     pass
 
 import fxdayu_data.data.collector.sina_tick as sina_tick
+from fxdayu_data.data.collector.quests import QuestHandler, Quest
 
-__all__ = ['MongoHandler', "RedisHandler", "OandaAPI", "sina_tick"]
+__all__ = ['MongoHandler', "RedisHandler", "OandaAPI", "sina_tick", "Quest", "QuestHandler"]
