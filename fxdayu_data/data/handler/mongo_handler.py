@@ -8,13 +8,18 @@ import pymongo
 
 class MongoHandler(DataHandler):
 
-    def __init__(self, host='localhost', port=27017, users=None, db=None, **kwargs):
-        self.client = pymongo.MongoClient(host, port, **kwargs)
+    def __init__(self, host='localhost', port=27017, users=None, db=None, client=None,  **kwargs):
+        if client:
+            self.client = client
+        else:
+            self.client = pymongo.MongoClient(host, port, **kwargs)
         self.db = self.client[db] if db else None
-
         if isinstance(users, dict):
             for db_name, config in users.items():
                 self.client[db_name].authenticate(config['name'], config['password'])
+
+    def __getitem__(self, item):
+        return MongoHandler(client=self.client, db=item)
 
     @classmethod
     def read_config(cls, config):
