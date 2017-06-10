@@ -23,29 +23,44 @@ def create_filter(index, start, end, length, kwargs):
 
 class MongoHandler(DataHandler):
 
-    def __init__(self, host='localhost', port=27017, users=None, db=None, **kwargs):
-        self.client = pymongo.MongoClient(host, port, **kwargs)
+    def __init__(self, host='localhost', port=27017, users=None, db=None, client=None,  **kwargs):
+        if client:
+            self.client = client
+        else:
+            self.client = pymongo.MongoClient(host, port, **kwargs)
         self.db = db
 
         if isinstance(users, dict):
             for db_name, config in users.items():
                 self.client[db_name].authenticate(config['name'], config['password'])
 
+    def __getitem__(self, item):
+        return MongoHandler(client=self.client, db=item)
+
     @classmethod
     def read_config(cls, config):
         import json
-        return cls(**json.load(open(config)))
+        return cls.params(**json.load(open(config)))
+
+    @classmethod
+    def params(cls, **kwargs):
+        from pymongo import MongoClient
+
+        db = kwargs.pop('db', None)
+        users = kwargs.pop('users', None)
+        return cls(client=MongoClient(**kwargs), db=db, users=users)
 
     def _locate(self, collection, db=None):
         if isinstance(collection, database.Collection):
             return collection
         else:
-            if db is None:
-                return self.db[collection]
-            elif isinstance(db, database.Database):
-                return db[collection]
+            if db is not None:
+                if isinstance(db, database.Database):
+                    return db[collection]
+                else:
+                    return self.client[db][collection]
             else:
-                return self.client[db][collection]
+                return self.client[self.db][collection]
 
     def write(self, data, collection, db=None, index=None):
         """
@@ -79,31 +94,14 @@ class MongoHandler(DataHandler):
         if index:
             kwargs = create_filter(index, start, end, length, kwargs)
 
-        db = self.db if db is None else self.client[db]
-
-        if isinstance(collection, str):
-            return self._read(db[collection], index, **kwargs)
-        if isinstance(collection, database.Collection):
-            return self._read(collection, index, **kwargs)
-        elif isinstance(collection, (list, tuple)):
-            panel = {}
-            for col in collection:
-                try:
-                    if isinstance(col, database.Collection):
-                        panel[col.name] = self._read(col, index, **kwargs)
-                    else:
-                        panel[col] = self._read(db[col], index, **kwargs)
-                except KeyError as ke:
-                    if index in str(ke):
-                        pass
-                    else:
-                        raise ke
+        if isinstance(collection, (list, tuple)):
+            panel = {col: self._read(col, db, index, **kwargs) for col in collection}
             return pd.Panel.from_dict(panel)
         else:
-            return self._read(db[collection], index, **kwargs)
+            return self._read(collection, db, index, **kwargs)
 
-    @staticmethod
-    def _read(collection, index=None, **kwargs):
+    def _read(self, collection, db, index, **kwargs):
+        collection = self._locate(collection, db)
         if index:
             if 'sort' not in kwargs:
                 kwargs['sort'] = [(index, 1)]
@@ -134,6 +132,7 @@ class MongoHandler(DataHandler):
 
         collection = self._locate(collection, db)
         data = self.normalize(data, index)
+        print data[0]['datetime']
 
         collection.delete_many({index: {'$gte': data[0][index], '$lte': data[-1][index]}})
         collection.insert_many(data)
@@ -180,4 +179,3 @@ class MongoHandler(DataHandler):
             return self.db.collection_names()
         else:
             return self.client[db].collection_names()
-
