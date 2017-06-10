@@ -6,11 +6,26 @@ import pandas as pd
 import pymongo
 
 
+def create_filter(index, start, end, length, kwargs):
+    index_range = {}
+    if start:
+        index_range["$gte"] = start
+    else:
+        kwargs.setdefault('sort', []).append((index, -1))
+    if end:
+        index_range["$lte"] = end
+    if length:
+        kwargs['limit'] = length
+    if len(index_range):
+        kwargs.setdefault('filter', {})[index] = index_range
+    return kwargs
+
+
 class MongoHandler(DataHandler):
 
     def __init__(self, host='localhost', port=27017, users=None, db=None, **kwargs):
         self.client = pymongo.MongoClient(host, port, **kwargs)
-        self.db = self.client[db] if db else None
+        self.db = db
 
         if isinstance(users, dict):
             for db_name, config in users.items():
@@ -62,20 +77,7 @@ class MongoHandler(DataHandler):
         """
 
         if index:
-            if start:
-                fter = {index: {'$gte': start}}
-                if end:
-                    fter[index]['$lte'] = end
-                elif length:
-                    kwargs['limit'] = length
-                kwargs['filter'] = fter
-            elif length:
-                kwargs['sort'] = [(index, -1)]
-                kwargs['limit'] = length
-                if end:
-                    kwargs['filter'] = {index: {'$lte': end}}
-            elif end:
-                kwargs['filter'] = {index: {'$lte': end}}
+            kwargs = create_filter(index, start, end, length, kwargs)
 
         db = self.db if db is None else self.client[db]
 
@@ -178,3 +180,4 @@ class MongoHandler(DataHandler):
             return self.db.collection_names()
         else:
             return self.client[db].collection_names()
+
