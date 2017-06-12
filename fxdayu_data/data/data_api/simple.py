@@ -1,5 +1,6 @@
 # encoding:utf-8
-from fxdayu_data.data.data_api import BasicConfig
+from fxdayu_data.data.data_api import BasicConfig, lru_cache
+from fxdayu_data.data.data_api.tools import ensure_index
 
 
 class Simple(BasicConfig):
@@ -15,13 +16,11 @@ class Simple(BasicConfig):
 
 
 class Fundamental(Simple):
-    def __call__(self, symbols, fields=None, start=None, end=None, length=None):
-        if fields is None:
-            return self.handler.read(symbols, start=start, end=end, length=length)
-        else:
-            if isinstance(fields, str):
-                fields = ['datetime', fields]
-            elif 'datetime' not in fields:
-                fields = ['datetime'].extend(fields)
 
-            return self.handler.read(symbols, start=start, end=end, length=length, projection=fields)
+    def __init__(self):
+        super(Fundamental, self).__init__()
+        self.indexer = ensure_index('datetime')
+
+    @lru_cache(128)
+    def __call__(self, symbols, fields=None, start=None, end=None, length=None):
+        return self.handler.read(symbols, start=start, end=end, length=length, projection=self.indexer(fields))
