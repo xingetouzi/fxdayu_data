@@ -11,12 +11,14 @@ import logging
 import threading
 import time
 import re
-import pandas as pd
-import requests
 import os
 
-from fxdayu_data.data.handler.redis_handler import RedisHandler
-from fxdayu_data.data.collector.sina_tick import today_1min, reconnect_wrap
+import pandas as pd
+import requests
+
+from fxdayu_data.handler.redis_handler import RedisHandler
+from fxdayu_data.collector.sina_tick import today_1min, reconnect_wrap
+
 
 LIVE_DATA_COLS = ['name', 'open', 'pre_close', 'price', 'high', 'low', 'bid', 'ask', 'volume', 'amount',
                   'b1_v', 'b1_p', 'b2_v', 'b2_p', 'b3_v', 'b3_p', 'b4_v', 'b4_p', 'b5_v', 'b5_p',

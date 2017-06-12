@@ -1,9 +1,11 @@
-from fxdayu_data.data.handler.base import DataHandler
 from collections import Iterable
 from datetime import datetime
+
 from numpy import float64
 import pandas as pd
 import redis
+
+from fxdayu_data.handler.base import DataHandler
 
 
 class RedisHandler(DataHandler):

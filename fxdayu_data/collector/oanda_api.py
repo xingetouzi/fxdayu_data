@@ -1,8 +1,10 @@
-from fxdayu_data.data.decorators import value_wrapper
 from functools import partial
 from datetime import datetime
+
 import pandas as pd
 import oandapy
+
+from fxdayu_data.tools.decorators import value_wrapper
 
 
 def time_index(frame, source='timestamp'):

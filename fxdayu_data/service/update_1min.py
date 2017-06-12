@@ -1,6 +1,7 @@
 from datetime import datetime
 import json
-from fxdayu_data.data.collector.stock_data import StockData
+
+from fxdayu_data.collector.stock_data import StockData
 
 
 start = datetime(2017, 1, 1)

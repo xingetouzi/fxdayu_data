@@ -1,7 +1,9 @@
 # encoding:utf-8
-from fxdayu_data.data.handler.mongo_handler import MongoHandler
 from collections import Iterable
+
 import pandas as pd
+
+from fxdayu_data.handler.mongo_handler import MongoHandler
 
 
 class CandleReader(object):

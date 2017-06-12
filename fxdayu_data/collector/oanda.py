@@ -1,7 +1,8 @@
 from inspect import isgeneratorfunction
-from fxdayu_data.data.collector.quests import QuestHandler, ARGS
 from itertools import product
 from functools import partial
+
+from fxdayu_data.collector.quests import QuestHandler, ARGS
 
 
 def str_params(**kwargs):

@@ -1,10 +1,11 @@
-from fxdayu_data.data.handler.mongo_handler import MongoHandler
-from connect_sql import read_json, get_db
-from datetime import datetime
 import pandas as pd
+
+from fxdayu_data.handler.mongo_handler import MongoHandler
+from connect_sql import read_json, get_db
 
 
 COLUMNS = ['cal_date', 'yz']
+
 
 def function(fqyz_config, target_config, source_config):
     fqyz = get_db(**read_json(fqyz_config))

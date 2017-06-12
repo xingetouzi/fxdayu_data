@@ -1,7 +1,9 @@
+from datetime import timedelta, datetime
+
 import tushare
 import pandas as pd
-from datetime import timedelta, datetime
-from fxdayu_data.data.collector.sina_tick import today_1min, history_1min, get_slice
+
+from fxdayu_data.collector.sina_tick import today_1min, history_1min, get_slice
 
 
 def ts_code(code):
@@ -33,7 +35,7 @@ def update_k_data(handler, code, **kwargs):
 
 
 def save_k_datas(handler, codes, t=5, **kwargs):
-    from quests import QuestHandler
+    from fxdayu_data.collector.quests import QuestHandler
     from functools import partial
 
     func = partial(save_k_data, handler, **kwargs)
@@ -41,7 +43,7 @@ def save_k_datas(handler, codes, t=5, **kwargs):
 
 
 def update_k_all(handler, t=5, **kwargs):
-    from quests import QuestHandler
+    from fxdayu_data.collector.quests import QuestHandler
     from functools import partial
 
     func = partial(update_k_data, handler, **kwargs)
@@ -84,7 +86,7 @@ def update_1min(handler, code, end=datetime.now()):
 
 
 def save_1mins(handler, codes, t=5, *args, **kwargs):
-    from quests import QuestHandler
+    from fxdayu_data.collector.quests import QuestHandler
     from functools import partial
 
     func = partial(save_1min, handler, *args, **kwargs)
@@ -92,7 +94,7 @@ def save_1mins(handler, codes, t=5, *args, **kwargs):
 
 
 def update_1mins(handler, codes=None, t=5, *args, **kwargs):
-    from quests import QuestHandler
+    from fxdayu_data.collector.quests import QuestHandler
     from functools import partial
 
     if codes is None:

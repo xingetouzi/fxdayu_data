@@ -4,7 +4,6 @@ try:
 except ImportError:
     from queue import Queue, Empty
 from threading import Thread
-from functools import partial
 
 
 SINGLE = lambda i: ((i,), {})

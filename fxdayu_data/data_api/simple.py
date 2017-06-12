@@ -1,6 +1,6 @@
 # encoding:utf-8
-from fxdayu_data.data.data_api import BasicConfig, lru_cache
-from fxdayu_data.data.data_api.tools import ensure_index
+from fxdayu_data.data_api import BasicConfig, lru_cache
+from fxdayu_data.handler.mongo_handler import ensure_index
 
 
 class Simple(BasicConfig):
@@ -15,10 +15,10 @@ class Simple(BasicConfig):
         return self.handler
 
 
-class Fundamental(Simple):
+class Factor(Simple):
 
     def __init__(self):
-        super(Fundamental, self).__init__()
+        super(Factor, self).__init__()
         self.indexer = ensure_index('datetime')
 
     @lru_cache(128)

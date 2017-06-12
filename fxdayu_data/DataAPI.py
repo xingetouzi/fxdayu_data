@@ -1,7 +1,7 @@
 # encoding:utf-8
 
 
-__all__ = ["init_config", "set_file", "candle", "fundamental"]
+__all__ = ["init_config", "set_file", "candle", "factor", "get"]
 FILE = 'config.py'
 
 
@@ -34,7 +34,7 @@ def candle(symbols, freq, fields=None, start=None, end=None, length=None, adjust
     pass
 
 
-def fundamental(symbols, fields, start=None, end=None, length=None):
+def factor(symbols, fields, start=None, end=None, length=None):
     """
 
     :param symbols: str | list[str]
@@ -45,6 +45,10 @@ def fundamental(symbols, fields, start=None, end=None, length=None):
     :return: pd.DataFrame or pd.Panel
     """
     pass
+
+
+def get(api, *args, **kwargs):
+    return globals()[api](*args, **kwargs)
 
 
 init_config()

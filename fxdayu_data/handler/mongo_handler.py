@@ -1,9 +1,9 @@
 # encoding:utf-8
-from datetime import datetime
-from fxdayu_data.data.handler.base import DataHandler
 from pymongo.mongo_client import database
 import pandas as pd
 import pymongo
+
+from fxdayu_data.handler.base import DataHandler
 
 
 def create_filter(index, start, end, length, kwargs):
@@ -19,6 +19,25 @@ def create_filter(index, start, end, length, kwargs):
     if len(index_range):
         kwargs.setdefault('filter', {})[index] = index_range
     return kwargs
+
+
+def ensure_index(index, default=None):
+    def generate(iterable):
+        yield index
+        for i in iterable:
+            yield i
+
+    def indexer(origin):
+        if isinstance(origin, str):
+            return index, origin
+        elif origin is None:
+            return default
+        elif index not in origin:
+            return list(generate(origin))
+        else:
+            return origin
+
+    return indexer
 
 
 class MongoHandler(DataHandler):

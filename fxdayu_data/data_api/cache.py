@@ -1,6 +1,7 @@
 # encoding:utf-8
-import pandas as pd
 from collections import Iterable
+
+import pandas as pd
 
 
 class OutRangeException(Exception):
@@ -99,7 +100,7 @@ class CandleCache(object):
 
 
 if __name__ == '__main__':
-    from fxdayu_data.analysis.random_data import random_panel
+    from fxdayu_data.tools.random_data import random_panel
     from datetime import datetime
 
     minor = ['open', 'high']
