@@ -22,9 +22,9 @@ def set_file(file_path):
 def candle(symbols, freq, fields=None, start=None, end=None, length=None, adjust=None):
     """
 
-    :param symbols: str | list[str]
+    :param symbols: str | tuple(str) | hashable array
     :param freq:  str
-    :param fields: str | list[str]
+    :param fields: str | tuple(str) | hashable array
     :param start: datetime.datetime
     :param end: datetime.datetime
     :param length: int
@@ -37,8 +37,8 @@ def candle(symbols, freq, fields=None, start=None, end=None, length=None, adjust
 def factor(symbols, fields, start=None, end=None, length=None):
     """
 
-    :param symbols: str | list[str]
-    :param fields: str | list[str]
+    :param symbols: str | tuple(str) | hashable array
+    :param fields: str | tuple(str) | hashable array
     :param start: datetime.datetime
     :param end: datetime.datetime
     :param length: int
