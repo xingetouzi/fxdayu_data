@@ -11,15 +11,15 @@ def str_params(**kwargs):
 
 def save_history(handler, function, symbol, granularity, **kwargs):
     db = "Oanda_{}".format(granularity)
-    print "Saving {}.{} with {}".format(symbol, granularity, str_params(**kwargs))
+    print("Saving {}.{} with {}".format(symbol, granularity, str_params(**kwargs)))
     if isgeneratorfunction(function):
         for data in function(symbol, granularity=granularity, **kwargs):
             handler.inplace(data, symbol, db)
-            print "Save {} in {} from {} to {}".format(symbol, db, data.index[0], data.index[-1])
+            print("Save {} in {} from {} to {}".format(symbol, db, data.index[0], data.index[-1]))
     else:
         data = function(symbol, granularity=granularity, **kwargs)
         handler.inplace(data, symbol, db)
-        print "Save {} in {} from {} to {}".format(symbol, db, data.index[0], data.index[-1])
+        print("Save {} in {} from {} to {}".format(symbol, db, data.index[0], data.index[-1]))
 
 
 def save_histories(handler, function, symbols, granularities, **kwargs):

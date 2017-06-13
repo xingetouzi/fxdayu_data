@@ -86,4 +86,4 @@ class QuestHandler(object):
                 break
 
             if isinstance(quest, Quest):
-                print quest.run()
+                print(quest.run())

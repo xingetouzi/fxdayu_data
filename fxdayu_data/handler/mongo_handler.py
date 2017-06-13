@@ -1,9 +1,15 @@
 # encoding:utf-8
 from pymongo.mongo_client import database
+from collections import Iterable
 import pandas as pd
 import pymongo
 
 from fxdayu_data.handler.base import DataHandler
+
+try:
+    SINGLE = (str, unicode)
+except NameError:
+    SINGLE = str
 
 
 def create_filter(index, start, end, length, kwargs):
@@ -113,7 +119,9 @@ class MongoHandler(DataHandler):
         if index:
             kwargs = create_filter(index, start, end, length, kwargs)
 
-        if isinstance(collection, (list, tuple)):
+        if isinstance(collection, SINGLE):
+            return self._read(collection, db, index, **kwargs)
+        if isinstance(collection, Iterable):
             panel = {col: self._read(col, db, index, **kwargs) for col in collection}
             return pd.Panel.from_dict(panel)
         else:
@@ -151,7 +159,7 @@ class MongoHandler(DataHandler):
 
         collection = self._locate(collection, db)
         data = self.normalize(data, index)
-        print data[0]['datetime']
+        print(data[0]['datetime'])
 
         collection.delete_many({index: {'$gte': data[0][index], '$lte': data[-1][index]}})
         collection.insert_many(data)
@@ -180,7 +188,7 @@ class MongoHandler(DataHandler):
                 data[index] = data.index
             return [doc[1].to_dict() for doc in data.iterrows()]
         elif isinstance(data, dict):
-            key, value = list(map(lambda *args: args, *data.iteritems()))
+            key, value = list(map(lambda *args: args, *data.items()))
             return list(map(lambda *args: dict(map(lambda x, y: (x, y), key, args)), *value))
         elif isinstance(data, pd.Series):
             if data.name is None:

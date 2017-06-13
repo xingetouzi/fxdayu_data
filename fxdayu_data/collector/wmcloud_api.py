@@ -54,7 +54,7 @@ class Client(object):
 
     def request_url(self, api, **kwargs):
         params = '&'.join(map(
-            lambda (key, value): '='.join((key, self.fields_join(value))),
+            lambda item: '='.join((item[0], self.fields_join(item[1]))),
             kwargs.items()
         ))
         url = self.dome + self.api[api] + '?' + params

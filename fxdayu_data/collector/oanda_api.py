@@ -8,7 +8,7 @@ from fxdayu_data.tools.decorators import value_wrapper
 
 
 def time_index(frame, source='timestamp'):
-    frame.index = map(datetime.fromtimestamp, frame[source])
+    frame.index = list(map(datetime.fromtimestamp, frame[source]))
     return frame
 
 

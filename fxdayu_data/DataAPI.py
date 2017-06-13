@@ -5,9 +5,16 @@ __all__ = ["init_config", "set_file", "candle", "factor", "get"]
 FILE = 'config.py'
 
 
+def exec_config_file():
+    try:
+        execfile(FILE, globals())
+    except NameError:
+        exec(open(FILE).read(), globals())
+
+
 def init_config():
     try:
-        execfile(FILE, globals(), globals())
+        exec_config_file()
     except IOError as ioe:
         print(ioe)
         return

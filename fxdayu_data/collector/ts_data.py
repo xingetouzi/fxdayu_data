@@ -76,7 +76,7 @@ def iter_1min(code, start, end=None):
 
 def save_1min(handler, code, start, end=None):
     for data in iter_1min(code, start, end):
-        print handler.inplace(data, code)
+        print(handler.inplace(data, code))
 
 
 def update_1min(handler, code, end=datetime.now()):

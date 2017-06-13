@@ -32,11 +32,3 @@ class TimeWindow(object):
             return window[0], self.end
         else:
             raise StopIteration()
-
-
-if __name__ == '__main__':
-    from datetime import datetime, timedelta
-    tw = TimeWindow(datetime(2017, 1, 1), datetime(2017, 5, 21), timedelta(5))
-
-    for left, right in tw:
-        print left, right

@@ -9,7 +9,7 @@ from fxdayu_data.handler.mongo_handler import ensure_index
 
 try:
     SINGLE = (str, unicode)
-except Exception:
+except NameError:
     SINGLE = str
 
 
@@ -42,7 +42,7 @@ class Candle(BasicConfig):
             return handler.read(symbols, db, start=start, end=end, length=length, projection=fields)
         else:
             adj_frame = self.adjust(start=start, end=end, length=length, projection=self.indexer(symbols))
-            if adjust == "former":
+            if adjust == "before":
                 for name, item in adj_frame.iteritems():
                     adj_frame[name] = item[-1] / item
 

@@ -38,7 +38,7 @@ def reconnect_wrap(retry=3, wait=0.1, error=ConnectionError):
                 try:
                     return func(*args, **kwargs)
                 except error as e:
-                    print e
+                    print(e)
                     rt -= 1
             raise e
 
@@ -103,7 +103,7 @@ def tick2min(frame):
         result['volume'] = resampler['volume'].sum()
         return result.dropna()
     except Exception as e:
-        print e
+        print(e)
         return frame
 
 

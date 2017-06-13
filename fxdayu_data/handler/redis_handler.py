@@ -1,11 +1,17 @@
 from collections import Iterable
 from datetime import datetime
-
-from numpy import float64
 import pandas as pd
 import redis
 
 from fxdayu_data.handler.base import DataHandler
+try:
+    from numpy import float64
+except ImportError:
+    float64 = float
+try:
+    SINGLE = (str, int, float, unicode)
+except NameError:
+    SINGLE = (str, int, float)
 
 
 class RedisHandler(DataHandler):
@@ -108,7 +114,7 @@ class RedisHandler(DataHandler):
                 pipeline.rpush(self.join(name, key), *item)
         elif isinstance(data, dict):
             for key, value in data.items():
-                if isinstance(value, (str, int, float, unicode)):
+                if isinstance(value, SINGLE):
                     pipeline.rpush(self.join(name, key), value)
                 elif isinstance(value, Iterable):
                     pipeline.rpush(self.join(name, key), *value)
