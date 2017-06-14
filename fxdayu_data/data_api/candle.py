@@ -13,50 +13,62 @@ except NameError:
     SINGLE = str
 
 
-def adjust_candle(frame, adjust_factor):
+def adjust_candle(frame, adjust_factor, price):
         factor = pd.Series(adjust_factor, frame.index).bfill()
-        for c in ['open', 'high', 'close', 'low']:
-            frame[c] = frame[c] * factor
+        for name in price:
+            frame[name] = frame[name] * factor
         return frame
 
 
 class Candle(BasicConfig):
 
     COLUMNS = ['datetime', 'open', 'high', 'low', 'close', 'volume']
+    PRICE = ['open', 'high', 'low', 'close']
 
     def __init__(self):
         self.freq = {}
         self.indexer = ensure_index('datetime', self.COLUMNS)
-        self.adjust = None
+        self.adjust = tuple()
+
+    def read_adjust(self, start, end, projection, after=True):
+        handler, col, db = self.adjust
+        adjust = handler.read(collection=col, db=db, start=start, end=end, projection=projection)
+        if after:
+            return adjust
+        else:
+            for name, item in adjust.iteritems():
+                adjust[name] = item[-1] / item
+            return adjust
 
     def set_adjust(self, handler, db, collection):
-        from functools import partial
-        self.adjust = partial(handler.read, collection=collection, db=db)
+        self.adjust = (handler, collection, db)
 
     @lru_cache(128)
     def __call__(self, symbols, freq, fields=None, start=None, end=None, length=None, adjust=None):
         handler, db = self.get(freq)
         fields = self.indexer(fields)
 
-        if not adjust:
-            return handler.read(symbols, db, start=start, end=end, length=length, projection=fields)
+        data = handler.read(symbols, db, start=start, end=end, length=length, projection=fields)
+        if not adjust or (len(data) == 0):
+            return data
         else:
-            adj_frame = self.adjust(start=start, end=end, length=length, projection=self.indexer(symbols))
-            if adjust == "before":
-                for name, item in adj_frame.iteritems():
-                    adj_frame[name] = item[-1] / item
-
-            if isinstance(symbols, SINGLE):
-                data = handler.read(symbols, db, start=start, end=end, length=length, projection=fields)
-                return adjust_candle(data, adj_frame.iloc[:, 0])
-            elif isinstance(symbols, Iterable):
-                dct = {s: handler.read(s, db, start=start, end=end, length=length, projection=fields) for s in symbols}
-                for key, value in dct.items():
-                    dct[key] = adjust_candle(value, adj_frame[key])
-                return pd.Panel.from_dict(dct)
+            price = filter(lambda p: p in self.PRICE, fields)
+            if isinstance(data, pd.DataFrame):
+                adjust_table = self.read_adjust(
+                    data.index[0], data.index[-1],
+                    self.indexer(symbols), adjust == 'after')
+                for name, item in adjust_table.iteritems():
+                    data = adjust_candle(data, item, price)
+                return data
+            elif isinstance(data, pd.Panel):
+                adjust_table = self.read_adjust(
+                    data.major_axis[0], data.major_axis[-1],
+                    self.indexer(data.items), adjust == 'after')
+                for name, item in adjust_table.iteritems():
+                    data[name] = adjust_candle(data[name], item, price)
+                return data
             else:
-                data = handler.read(symbols, db, start=start, end=end, length=length, projection=fields)
-                return adjust_candle(data, adj_frame.iloc[:, 0])
+                return data
 
     def set(self, handler, **freq):
         for f, db in freq.items():

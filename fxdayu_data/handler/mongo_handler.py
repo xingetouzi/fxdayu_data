@@ -28,21 +28,15 @@ def create_filter(index, start, end, length, kwargs):
 
 
 def ensure_index(index, default=None):
-    def generate(iterable):
-        yield index
-        for i in iterable:
-            yield i
-
     def indexer(origin):
-        if isinstance(origin, str):
+        if isinstance(origin, SINGLE):
             return index, origin
-        elif origin is None:
-            return default
-        elif index not in origin:
-            return list(generate(origin))
+        elif isinstance(origin, Iterable):
+            s = set(origin)
+            s.add(index)
+            return tuple(s)
         else:
-            return origin
-
+            return default
     return indexer
 
 
@@ -122,10 +116,16 @@ class MongoHandler(DataHandler):
         if isinstance(collection, SINGLE):
             return self._read(collection, db, index, **kwargs)
         if isinstance(collection, Iterable):
-            panel = {col: self._read(col, db, index, **kwargs) for col in collection}
+            panel = dict(self._reads(collection, db, index, **kwargs))
             return pd.Panel.from_dict(panel)
         else:
             return self._read(collection, db, index, **kwargs)
+
+    def _reads(self, collections, db, index, **kwargs):
+        for col in collections:
+            frame = self._read(col, db, index, **kwargs)
+            if len(frame):
+                yield col, frame
 
     def _read(self, collection, db, index, **kwargs):
         collection = self._locate(collection, db)
@@ -159,24 +159,23 @@ class MongoHandler(DataHandler):
 
         collection = self._locate(collection, db)
         data = self.normalize(data, index)
-        print(data[0]['datetime'])
 
         collection.delete_many({index: {'$gte': data[0][index], '$lte': data[-1][index]}})
         collection.insert_many(data)
         collection.create_index(index)
         return {'collection': collection.name, 'start': data[0], 'end': data[-1]}
 
-    def update(self, data, collection, db=None, index='datetime', how='$set'):
+    def update(self, data, collection, db=None, index='datetime', how='$set', **kwargs):
         collection = self._locate(collection, db)
 
         if isinstance(data, pd.DataFrame):
             if index in data.columns:
                 data.index = data[index]
             for name, doc in data.iterrows():
-                collection.update_one({index: name}, {how: doc.to_dict()})
+                collection.update_one({index: name}, {how: doc.to_dict()}, **kwargs)
         else:
             for doc in data:
-                collection.update_one({index: doc.pop(index)}, doc)
+                collection.update_one({index: doc.pop(index)}, doc, **kwargs)
 
     def delete(self, filter, collection, db=None):
         collection = self._locate(collection, db)
