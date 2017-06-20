@@ -202,6 +202,6 @@ class MongoHandler(DataHandler):
 
     def table_names(self, db=None):
         if not db:
-            return self.db.collection_names()
+            return self.client[self.db].collection_names()
         else:
             return self.client[db].collection_names()

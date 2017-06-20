@@ -41,7 +41,7 @@ def candle(symbols, freq, fields=None, start=None, end=None, length=None, adjust
     pass
 
 
-def factor(symbols, fields, start=None, end=None, length=None):
+def factor(symbols, fields=None, start=None, end=None, length=None):
     """
 
     :param symbols: str | tuple(str) | hashable array

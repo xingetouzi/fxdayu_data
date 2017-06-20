@@ -11,7 +11,7 @@ CANDLE_MAP = {'open': 'first',
               'low': 'min',
               'close': 'last'}
 
-HEADERS = {
+TODAY_HEADERS = {
     "Accept": "*/*",
     "Accept-Encoding": "gzip, deflate, sdch",
     "Accept-Language": "zh-CN,zh;q=0.8",
@@ -21,6 +21,14 @@ HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 "
                   "(KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36}"}
 
+HIS_HEADERS = {
+    "Accept": "*/*",
+    "Accept-Encoding": "gzip, deflate, sdch",
+    "Accept-Language": "zh-CN,zh;q=0.8",
+    "Connection": "keep-alive",
+    "Referer": "http://finance.sina.com.cn/data/",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 "
+                  "(KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36}"}
 
 TICK_HISTORY = "http://market.finance.sina.com.cn/downxls.php?"
 TICK_TODAY = "http://vip.stock.finance.sina.com.cn/quotes_service/view/CN_TransListV2.php?"
@@ -75,23 +83,23 @@ def item_transfer(frame, **kwargs):
 
 # 获取历史tick数据(str)
 @reconnect_wrap()
-def history_text(code, date_):
+def history_text(code, date_, **kwargs):
     url = make_url(TICK_HISTORY, join_params(symbol=code, date=date_.strftime("%Y-%m-%d")))
-    response = requests.get(url)
+    response = requests.get(url, headers=HIS_HEADERS, **kwargs)
     return response.content
 
 
 # 获取历史tick数据(DataFrame)
-def history_tick(code, date_):
-    text = history_text(code, date_)
+def history_tick(code, date_, **kwargs):
+    text = history_text(code, date_, **kwargs)
     tick = pd.DataFrame(re.findall(HISTORY_FORMAT, text, re.S), columns=HISTORY_TICK_COLUMNS)
     tick = item_transfer(tick, price=pd.to_numeric, volume=lambda s: pd.to_numeric(s)*100)
     return time_wrap(tick, date_)
 
 
 # 获取历史1min数据(DataFrame)
-def history_1min(code, date):
-    tick = history_tick(code, date)
+def history_1min(code, date, **kwargs):
+    tick = history_tick(code, date, **kwargs)
     return tick2min(tick)
 
 
@@ -113,7 +121,7 @@ def raw_tick(code, session=None, **kwargs):
     url = make_url(TICK_TODAY, join_params(symbol=code, **kwargs))
     if not session:
         session = session if session else requests.Session()
-        session.headers = HEADERS
+        session.headers = TODAY_HEADERS
     request = requests.Request('get', url)
     response = session.send(request.prepare())
     return response.content

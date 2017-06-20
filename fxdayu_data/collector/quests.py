@@ -86,4 +86,10 @@ class QuestHandler(object):
                 break
 
             if isinstance(quest, Quest):
-                print(quest.run())
+                try:
+                    print(quest.run())
+                except Exception as e:
+                    print "Exception: {}\n" \
+                          "Function: {}\n" \
+                          "args: {}\n"\
+                          "kwargs: {}".format(e, quest.function, quest.args, quest.kwargs)
