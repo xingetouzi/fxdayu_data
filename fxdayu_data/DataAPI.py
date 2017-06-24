@@ -54,6 +54,10 @@ def factor(symbols, fields=None, start=None, end=None, length=None):
     pass
 
 
+def excel(name, *sheetname, **kwargs):
+    pass
+
+
 def get(api, *args, **kwargs):
     return globals()[api](*args, **kwargs)
 

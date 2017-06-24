@@ -5,6 +5,7 @@ except ImportError:
 from fxdayu_data.data_api.base import BasicConfig
 from fxdayu_data.data_api.simple import Simple, Factor
 from fxdayu_data.data_api.candle import Candle
+from fxdayu_data.data_api.excel_io import Excel
 
 
-__all__ = ['BasicConfig', 'Candle', "Simple", "Factor", "lru_cache"]
+__all__ = ['BasicConfig', 'Candle', "Simple", "Factor", "Excel", "lru_cache"]
