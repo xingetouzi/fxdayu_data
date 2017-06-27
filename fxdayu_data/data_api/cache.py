@@ -100,7 +100,7 @@ class CandleCache(object):
 
 
 if __name__ == '__main__':
-    from fxdayu_data.tools.random_data import random_panel
+    from fxdayu_data.tools.pandas_tools import random_panel
     from datetime import datetime
 
     minor = ['open', 'high']
