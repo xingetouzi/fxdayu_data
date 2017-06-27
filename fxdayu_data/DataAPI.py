@@ -58,6 +58,10 @@ def excel(name, *sheetname, **kwargs):
     pass
 
 
+def MarketIndex(code, freq, fields=None, start=None, end=None, length=None):
+    pass
+
+
 def get(api, *args, **kwargs):
     return globals()[api](*args, **kwargs)
 
