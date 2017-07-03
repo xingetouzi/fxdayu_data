@@ -1,15 +1,16 @@
 # encoding:utf-8
-
+import os
 
 __all__ = ["init_config", "set_file", "candle", "factor", "get"]
-FILE = 'config.py'
+
+FILE = os.path.join(os.environ.get("FXDAYU_ROOT", "~/.fxdayu"), 'config.py')
 
 
 def exec_config_file():
     try:
         execfile(FILE, globals())
     except NameError:
-        exec(open(FILE).read(), globals())
+        exec (open(FILE).read(), globals())
 
 
 def init_config():
