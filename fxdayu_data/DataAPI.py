@@ -3,7 +3,7 @@ import os
 
 __all__ = ["init_config", "set_file", "candle", "factor", "get"]
 
-FILE = os.path.join(os.environ.get("FXDAYU_ROOT", "~/.fxdayu"), 'config.py')
+FILE = os.path.expanduser(os.path.join(os.environ.get("FXDAYU_ROOT", "~/.fxdayu/data"), 'config.py'))
 
 
 def exec_config_file():
