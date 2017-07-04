@@ -45,11 +45,21 @@ NODATA = u"当天没有数据".encode("gbk")
 
 
 class SinaBreak(Exception):
-    pass
+
+    def __init__(self):
+        self.message = "SinaBreak"
+
+    def __str__(self):
+        return "SinaBreakException"
 
 
 class SinaNoData(Exception):
-    pass
+
+    def __init__(self):
+        self.message = "SinaNoData"
+
+    def __str__(self):
+        return "SinaNoDataException"
 
 
 def reconnect_wrap(retry=3, wait=0.1, error=ConnectionError):
@@ -98,8 +108,7 @@ def item_transfer(frame, **kwargs):
 # 获取历史tick数据(str)
 def history_text(code, date_, **kwargs):
     url = make_url(TICK_HISTORY, join_params(symbol=code, date=date_.strftime("%Y-%m-%d")))
-    response = requests.get(url, headers=HIS_HEADERS, **kwargs)
-    return check_response(response.content)
+    return requests.get(url, headers=HIS_HEADERS, **kwargs).content
 
 
 def check_response(content):
@@ -120,6 +129,7 @@ def text2tick(content, date_):
 # 获取历史tick数据(DataFrame)
 def history_tick(code, date_, **kwargs):
     text = history_text(code, date_, **kwargs)
+    text = check_response(text)
     return text2tick(text, date_)
 
 

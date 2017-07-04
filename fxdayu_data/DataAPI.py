@@ -1,8 +1,17 @@
 # encoding:utf-8
+import os
 
 
 __all__ = ["init_config", "set_file", "candle", "factor", "get"]
-FILE = 'config.py'
+
+
+def config_path():
+    try:
+        return os.environ['DataAPI']
+    except:
+        return "config.py"
+
+FILE = config_path()
 
 
 def exec_config_file():
