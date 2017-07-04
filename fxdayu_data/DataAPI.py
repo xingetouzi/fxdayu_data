@@ -2,23 +2,16 @@
 import os
 
 
-__all__ = ["init_config", "set_file", "candle", "factor", "get"]
+__all__ = ["init_config", "set_file", "candle", "factor", "get", "MarketIndex"]
 
-
-def config_path():
-    try:
-        return os.environ['DataAPI']
-    except:
-        return "config.py"
-
-FILE = config_path()
+FILE = os.path.expanduser(os.path.join(os.environ.get("FXDAYU_ROOT", "~/.fxdayu/data"), 'config.py'))
 
 
 def exec_config_file():
     try:
         execfile(FILE, globals())
     except NameError:
-        exec(open(FILE).read(), globals())
+        exec (open(FILE).read(), globals())
 
 
 def init_config():
