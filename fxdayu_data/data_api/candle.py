@@ -20,6 +20,10 @@ def adjust_candle(frame, adjust_factor, price):
         return frame
 
 
+def replace(old, new):
+    return lambda code: code.replace(old, new)
+
+
 class Candle(BasicConfig):
 
     COLUMNS = ['datetime', 'open', 'high', 'low', 'close', 'volume']
@@ -32,7 +36,10 @@ class Candle(BasicConfig):
 
     def read_adjust(self, start, end, projection, after=True):
         handler, col, db = self.adjust
-        adjust = handler.read(collection=col, db=db, start=start, end=end, projection=projection)
+        adjust = handler.read(
+            collection=col, db=db, start=start, end=end,
+            projection=map(replace('.', '_'), projection)
+        ).rename_axis(replace('_', '.'), 1)
         if after:
             return adjust
         else:
