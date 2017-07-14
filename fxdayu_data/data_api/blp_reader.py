@@ -3,10 +3,7 @@ import numpy as np
 import pandas as pd
 from collections import Iterable
 from datetime import datetime, timedelta
-
-
-root = "D:\\bundle\stocks.bcolz"
-SINGLE = (str, unicode)
+import six
 
 
 class BLPTable(object):
@@ -19,8 +16,10 @@ class BLPTable(object):
     def read(self, names, start=None, end=None, length=None, columns=None):
         if columns is None:
             columns = self.table.names
+        if isinstance(columns, six.string_types):
+            columns = (columns,)
 
-        if isinstance(names, SINGLE):
+        if isinstance(names, six.string_types):
             return self._read(names, start, end, length, columns)
         elif isinstance(names, Iterable):
             return pd.Panel.from_dict(
@@ -150,7 +149,7 @@ class FrameTable(BLPTable):
             start = self.index2blp(start)
             end = self.index2blp(end)
 
-        if isinstance(names, SINGLE):
+        if isinstance(names, six.string_types):
             return self._read(names, start, end, length, columns)
         else:
             return pd.DataFrame({name: self._read(name, start, end, length, columns) for name in names})
@@ -178,20 +177,17 @@ class FrameTable(BLPTable):
 
 class DateAdjustTable(FrameTable):
 
-    DateFormat = "%Y%m%d000000"
+    DateFormat = "%Y%m%d"
     GAP = timedelta(hours=15)
 
     def __init__(self, rootdir):
         super(DateAdjustTable, self).__init__(
             rootdir,
-            index='ex_date',
-            value='split_factor',
+            index='date',
+            value='adjust',
             index2blp=lambda date: int(date.strftime(self.DateFormat)) if isinstance(date, datetime) else date,
             blp2index=lambda num: datetime.strptime(str(num), self.DateFormat) + self.GAP,
         )
-
-    def _read(self, name, start, end, length, columns):
-        return super(DateAdjustTable, self)._read(name, start, end, length, columns).cumprod()
 
     def _index_slice(self, name, start, end, length):
         index_slice = super(DateAdjustTable, self)._index_slice(name, start, end, length)
@@ -199,3 +195,35 @@ class DateAdjustTable(FrameTable):
             return slice(index_slice.start-1, index_slice.stop)
         else:
             return index_slice
+
+
+def convert_date_to_int(dt):
+    if isinstance(dt, datetime):
+        t = dt.year * 10000 + dt.month * 100 + dt.day
+        t *= 1000000
+        return t
+    else:
+        return dt
+
+gap = timedelta(hours=15)
+
+
+def convert_num_to_date(num):
+    return datetime.strptime(str(num), "%Y%m%d000000") + gap
+
+
+class FactorReader(MapTable):
+
+    def __init__(self, rootdir):
+        super(FactorReader, self).__init__(rootdir, 'tradeDate', convert_date_to_int, convert_num_to_date)
+        self.columns = tuple(self.table.attrs['factors'])
+        self.ratio = self.table.attrs['default_ratio']
+
+    def read(self, names, start=None, end=None, length=None, columns=None):
+        if columns is None:
+            columns = self.columns
+
+        return super(FactorReader, self).read(names, start, end, length, columns)
+
+    def _read(self, name, start, end, length, columns):
+        return super(FactorReader, self)._read(name, start, end, length, columns).replace(0, np.nan) / self.ratio
