@@ -55,4 +55,4 @@ class BLPFactor(BasicConfig):
         self.reader = FactorReader(path)
 
     def __call__(self, symbols, fileds=None, start=None, end=None, length=None):
-        return self.reader.read(symbols, fileds, start, end, length)
+        return self.reader.read(symbols, start, end, length, fileds)
