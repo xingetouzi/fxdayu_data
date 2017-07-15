@@ -226,4 +226,5 @@ class FactorReader(MapTable):
         return super(FactorReader, self).read(names, start, end, length, columns)
 
     def _read(self, name, start, end, length, columns):
-        return super(FactorReader, self)._read(name, start, end, length, columns).replace(0, np.nan) / self.ratio
+        result = super(FactorReader, self)._read(name, start, end, length, columns)
+        return result[-result.index.duplicated()].replace(0, np.nan) / self.ratio
