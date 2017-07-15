@@ -116,7 +116,36 @@ def price2float(price):
     return price/10000.0
 
 
-class DateCandleTable(MapTable):
+class ClassifiedTable(MapTable):
+
+    def __init__(self, rootdir, index, index2blp=None, blp2index=None, **columns_map):
+        super(ClassifiedTable, self).__init__(rootdir, index, index2blp, blp2index, **columns_map)
+        self.market_index = self.table.attrs['index']
+        self.classify = self.table.attrs['classify']
+
+    def find(self, name):
+        if name in self.market_index:
+            return self.market_index[name]
+        elif name in self.classify:
+            return self.classify[name]
+        else:
+            raise KeyError('Cannot find %s' % name)
+
+    def read(self, names, start=None, end=None, length=None, columns=None):
+        if isinstance(names, six.string_types):
+            if '.' not in names:
+                names = self.find(names)
+
+        return super(ClassifiedTable, self).read(names, start, end, length, columns)
+
+    def _read(self, name, start, end, length, columns):
+        try:
+            return super(ClassifiedTable, self)._read(name, start, end, length, columns)
+        except KeyError:
+            return pd.DataFrame(columns=columns)
+
+
+class DateCandleTable(ClassifiedTable):
 
     COLUMNS = ['open', 'high', 'low', 'close', 'volume']
     price_mapper = {"high": price2float,
@@ -124,15 +153,25 @@ class DateCandleTable(MapTable):
                     "open": price2float,
                     "close": price2float}
 
-
     def __init__(self, rootdir):
         super(DateCandleTable, self).__init__(rootdir, 'date',  date2int, num2date, **self.price_mapper)
 
     def read(self, names, start=None, end=None, length=None, columns=None):
         if columns is None:
             columns = self.COLUMNS
+        elif isinstance(columns, six.string_types):
+            if not (columns == 'volume'):
+                columns = (columns, 'volume')
+        else:
+            if 'volume' not in columns:
+                columns = list(columns)
+                columns.append('volume')
 
         return super(DateCandleTable, self).read(names, start, end, length, columns)
+
+    def _read(self, name, start, end, length, columns):
+        result = super(DateCandleTable, self)._read(name, start, end, length, columns)
+        return result[result['volume'] != 0]
 
 
 class FrameTable(BLPTable):
@@ -212,7 +251,7 @@ def convert_num_to_date(num):
     return datetime.strptime(str(num), "%Y%m%d000000") + gap
 
 
-class FactorReader(MapTable):
+class FactorReader(ClassifiedTable):
 
     def __init__(self, rootdir):
         super(FactorReader, self).__init__(rootdir, 'tradeDate', convert_date_to_int, convert_num_to_date)
@@ -228,3 +267,24 @@ class FactorReader(MapTable):
     def _read(self, name, start, end, length, columns):
         result = super(FactorReader, self)._read(name, start, end, length, columns)
         return result[-result.index.duplicated()].replace(0, np.nan) / self.ratio
+
+
+if __name__ == '__main__':
+    import json
+
+    root = "X:\Users\caimeng\.fxdayu\data/factors.bcolz/"
+    name = '__attrs__'
+
+    target = "X:\Users\caimeng\.fxdayu\data\__attrs__.json"
+
+    disk = "F:/"
+    names = ['classify', 'index']
+
+    attrs = json.load(open(root+name))
+
+    for n in names:
+        dct = json.load(open(disk+n+'.json'))
+        attrs[n] = dct
+
+
+    json.dump(attrs, open(target, 'w'))

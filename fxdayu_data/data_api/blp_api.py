@@ -23,6 +23,9 @@ class BLPCandle(BasicConfig):
                      for symbol, frame in candle.iteritems()}
                 )
 
+    def find(self, name, freq="D"):
+        return self.tables[freq].find(name)
+
     def set(self, **kwargs):
         for freq, rootdir in kwargs.items():
             self.tables[freq] = DateCandleTable(rootdir)
@@ -56,3 +59,6 @@ class BLPFactor(BasicConfig):
 
     def __call__(self, symbols, fileds=None, start=None, end=None, length=None):
         return self.reader.read(symbols, start, end, length, fileds)
+
+    def find(self, name):
+        return self.reader.find(name)
