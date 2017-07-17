@@ -144,7 +144,7 @@ class ClassifiedTable(MapTable):
         except KeyError:
             return pd.DataFrame(columns=columns)
 
-        return result[-result.index.duplicated()]
+        return result[~result.index.duplicated()]
 
 
 class DateCandleTable(ClassifiedTable):

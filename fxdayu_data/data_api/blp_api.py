@@ -59,8 +59,8 @@ class BLPFactor(BasicConfig):
         self.reader = FactorReader(path)
 
     @lru_cache(maxsize=256)
-    def __call__(self, symbols, fileds=None, start=None, end=None, length=None):
-        return self.reader.read(symbols, start, end, length, fileds)
+    def __call__(self, symbols, fields=None, start=None, end=None, length=None):
+        return self.reader.read(symbols, start, end, length, fields)
 
     def find(self, name):
         return self.reader.find(name)
