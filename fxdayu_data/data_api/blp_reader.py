@@ -140,9 +140,11 @@ class ClassifiedTable(MapTable):
 
     def _read(self, name, start, end, length, columns):
         try:
-            return super(ClassifiedTable, self)._read(name, start, end, length, columns)
+            result = super(ClassifiedTable, self)._read(name, start, end, length, columns)
         except KeyError:
             return pd.DataFrame(columns=columns)
+
+        return result[-result.index.duplicated()]
 
 
 class DateCandleTable(ClassifiedTable):
@@ -265,26 +267,4 @@ class FactorReader(ClassifiedTable):
         return super(FactorReader, self).read(names, start, end, length, columns)
 
     def _read(self, name, start, end, length, columns):
-        result = super(FactorReader, self)._read(name, start, end, length, columns)
-        return result[-result.index.duplicated()].replace(0, np.nan) / self.ratio
-
-
-if __name__ == '__main__':
-    import json
-
-    root = "X:\Users\caimeng\.fxdayu\data/factors.bcolz/"
-    name = '__attrs__'
-
-    target = "X:\Users\caimeng\.fxdayu\data\__attrs__.json"
-
-    disk = "F:/"
-    names = ['classify', 'index']
-
-    attrs = json.load(open(root+name))
-
-    for n in names:
-        dct = json.load(open(disk+n+'.json'))
-        attrs[n] = dct
-
-
-    json.dump(attrs, open(target, 'w'))
+        return super(FactorReader, self)._read(name, start, end, length, columns).replace(0, np.nan) / self.ratio
