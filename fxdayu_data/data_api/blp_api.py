@@ -1,4 +1,4 @@
-from fxdayu_data.data_api import BasicConfig
+from fxdayu_data.data_api import BasicConfig, lru_cache
 from fxdayu_data.data_api.blp_reader import DateCandleTable, DateAdjustTable, FactorReader
 import pandas as pd
 
@@ -9,6 +9,7 @@ class BLPCandle(BasicConfig):
         self.tables = {}
         self.adjust = None
 
+    @lru_cache(maxsize=256)
     def __call__(self, symbols, freq, fields=None, start=None, end=None, length=None, adjust=None):
         candle = self.tables[freq].read(symbols, start, end, length, fields)
         if adjust is None:
@@ -57,6 +58,7 @@ class BLPFactor(BasicConfig):
     def __init__(self, path):
         self.reader = FactorReader(path)
 
+    @lru_cache(maxsize=256)
     def __call__(self, symbols, fileds=None, start=None, end=None, length=None):
         return self.reader.read(symbols, start, end, length, fileds)
 
