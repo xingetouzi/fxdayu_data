@@ -43,5 +43,5 @@ def delete(names):
 def show():
     """Show all config paths"""
     for item in DataConfig.get_config_paths().items():
-        print "%s: %s" % item
+        print("%s: %s" % item)
 

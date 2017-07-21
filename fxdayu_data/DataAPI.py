@@ -5,11 +5,10 @@ from fxdayu_data import DataConfig
 
 __all__ = ["init_config", "set_file", "candle", "factor", "get", "MarketIndex"]
 
-# FILE = os.path.expanduser(os.path.join(os.environ.get("FXDAYU_ROOT", "~/.fxdayu/data"), 'config.py'))
 try:
     FILE = DataConfig.get()
 except Exception as e:
-    print e
+    print(e)
     FILE = None
 
 

@@ -39,7 +39,3 @@ def set_config_paths(paths):
 
     file_path = config_paths_file()
     json.dump(paths, open(file_path, 'w'))
-
-
-if __name__ == '__main__':
-    print get_config_paths()
