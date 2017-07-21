@@ -1,10 +1,16 @@
 # encoding:utf-8
 import os
+from fxdayu_data import DataConfig
 
 
 __all__ = ["init_config", "set_file", "candle", "factor", "get", "MarketIndex"]
 
-FILE = os.path.expanduser(os.path.join(os.environ.get("FXDAYU_ROOT", "~/.fxdayu/data"), 'config.py'))
+# FILE = os.path.expanduser(os.path.join(os.environ.get("FXDAYU_ROOT", "~/.fxdayu/data"), 'config.py'))
+try:
+    FILE = DataConfig.get()
+except Exception as e:
+    print e
+    FILE = None
 
 
 def exec_config_file():
@@ -20,6 +26,10 @@ def init_config():
     except IOError as ioe:
         print(ioe)
         return
+
+
+def use(name):
+    set_file(DataConfig.get(name))
 
 
 def set_file(file_path):
