@@ -38,6 +38,7 @@ TICK_FORMAT = """new Array\('(.*?)', '(.*?)', '(.*?)', '(.*?)'\);"""
 HISTORY_FORMAT = "\n%s\n" % "\t".join(['(.*?)']*6)
 TICK_COLUMNS = ['time', 'volume', 'price', 'direction']
 HISTORY_TICK_COLUMNS = ['time', 'price', 'change', 'volume', 'amount', 'trend']
+FLOAT_TYPE = ['price', 'volume', 'amount']
 
 
 REJECTION = u"拒绝访问".encode('utf-8')
@@ -99,12 +100,6 @@ def make_url(*args):
     return ''.join(args)
 
 
-def item_transfer(frame, **kwargs):
-    for item, function in kwargs.items():
-        frame[item] = function(frame[item])
-    return frame
-
-
 # 获取历史tick数据(str)
 def history_text(code, date_, **kwargs):
     url = make_url(TICK_HISTORY, join_params(symbol=code, date=date_.strftime("%Y-%m-%d")))
@@ -122,8 +117,10 @@ def check_response(content):
 
 def text2tick(content, date_):
     tick = pd.DataFrame(re.findall(HISTORY_FORMAT, content, re.S), columns=HISTORY_TICK_COLUMNS)
-    tick = item_transfer(tick, price=pd.to_numeric, volume=lambda s: pd.to_numeric(s)*100)
-    return time_wrap(tick, date_)
+    tick = time_wrap(tick, date_)
+    tick[FLOAT_TYPE] = tick[FLOAT_TYPE].applymap(float)
+    tick['volume'] *= 100
+    return tick
 
 
 # 获取历史tick数据(DataFrame)
@@ -169,7 +166,7 @@ def get_tick(code, session=None, **kwargs):
     text = re.findall(TICK_FORMAT, text, re.S)
     today = date.today()
     tick = pd.DataFrame(list(reversed(text)), columns=TICK_COLUMNS)
-    tick = item_transfer(tick, volume=pd.to_numeric, price=pd.to_numeric)
+    tick[['volume', 'price']] = tick['volume', 'price'].applymap(float)
     return time_wrap(tick, today)
 
 
