@@ -40,7 +40,7 @@ class Candle(BasicConfig):
     def read(self, handler, db, symbol, fields, start, end, length, adjust):
         data = handler.read(symbol, db, start=start, end=end, length=length, projection=fields)
         if adjust:
-            return self.adjust.cal(symbol, data)
+            return self.adjust.cal(symbol, data, adjust)
         else:
             return data
 
@@ -55,28 +55,6 @@ class Candle(BasicConfig):
             return pd.Panel.from_dict(
                 {symbol: self.read(handler, db, symbol, fields, start, end, length, adjust) for symbol in symbols}
             )
-
-        # data = handler.read(symbols, db, start=start, end=end, length=length, projection=fields)
-        # if not adjust or (len(data) == 0):
-        #     return data
-        # else:
-        #     price = filter(lambda p: p in self.PRICE, fields)
-        #     if isinstance(data, pd.DataFrame):
-        #         adjust_table = self.read_adjust(
-        #             data.index[0], data.index[-1],
-        #             self.indexer(symbols), adjust == 'after')
-        #         for name, item in adjust_table.iteritems():
-        #             data = adjust_candle(data, item, price)
-        #         return data
-        #     elif isinstance(data, pd.Panel):
-        #         adjust_table = self.read_adjust(
-        #             data.major_axis[0], data.major_axis[-1],
-        #             self.indexer(data.items), adjust == 'after')
-        #         for name, item in adjust_table.iteritems():
-        #             data[name] = adjust_candle(data[name], item, price)
-        #         return data
-        #     else:
-        #         return data
 
     def set(self, handler, **freq):
         for f, db in freq.items():

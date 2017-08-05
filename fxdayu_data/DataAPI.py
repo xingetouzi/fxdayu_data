@@ -1,7 +1,7 @@
 # encoding:utf-8
 import os
 from fxdayu_data import DataConfig
-
+from fxdayu_data.data_api.info import BasicInfo
 
 __all__ = ["init_config", "set_file", "candle", "factor", "get", "MarketIndex"]
 
@@ -71,6 +71,9 @@ def excel(name, *sheetname, **kwargs):
 
 def MarketIndex(code, freq, fields=None, start=None, end=None, length=None):
     pass
+
+
+info = BasicInfo()
 
 
 def get(api, *args, **kwargs):

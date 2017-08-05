@@ -19,8 +19,12 @@ class Adjust(BasicConfig):
     def set(self, db):
         self.db = db
 
-    def cal(self, code, frame):
+    def cal(self, code, frame, atype="after"):
         table = self.read(code)
+        if atype != "after":
+            table['adjust'] = table['adjust']/table['adjust'].iloc[-1]
+            print table
+
         return calculate(table, frame)
 
     def read(self, code):
@@ -37,7 +41,6 @@ def calculate(table, candle):
         candle[PRICE] *= table.ix[-1, 'adjust']
 
     return candle
-
 
 
 def in_position(table, pos):
@@ -78,8 +81,5 @@ def main():
 
 
 if __name__ == '__main__':
-    # import pandas as pd
-    #
-    # print pd.Index(range(10)).searchsorted(8.5)
 
     main()
