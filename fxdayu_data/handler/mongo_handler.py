@@ -7,7 +7,6 @@ import six
 from collections import Iterable
 import pandas as pd
 import pymongo
-
 from fxdayu_data.handler.base import DataHandler
 
 __all__ = ["MongoHandler", "auth", "write", "inplace", "update", "read", "reads"]
