@@ -17,12 +17,15 @@ class Adjust(BasicConfig):
         self.db = db
 
     def cal(self, code, frame, atype="after"):
-        table = self.read(code)
-        if atype != "after":
-            table['adjust'] = table['adjust']/table['adjust'].iloc[-1]
-            print table
+        if len(frame):
+            table = self.read(code)
+            if atype != "after":
+                table['adjust'] = table['adjust']/table['adjust'].iloc[-1]
+                print table
 
-        return calculate(table, frame)
+            return calculate(table, frame)
+        else:
+            return frame
 
     def read(self, code):
         return read(self.db[code], index="start")
