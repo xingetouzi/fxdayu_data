@@ -39,13 +39,20 @@ class Candle(BasicConfig):
 
     def read(self, handler, db, symbol, fields, start, end, length, adjust):
         data = handler.read(symbol, db, start=start, end=end, length=length, projection=fields)
+
         if adjust:
-            return self.adjust.cal(symbol, data, adjust)
+            if "volume" in data.columns:
+                volume = data.pop("volume")
+                data = self.adjust.cal(symbol, data, adjust)
+                data['volume'] = volume
+                return data
+            else:
+                return self.adjust.cal(symbol, data, adjust)
         else:
             return data
 
     @lru_cache(128)
-    def __call__(self, symbols, freq, fields=None, start=None, end=None, length=None, adjust=None):
+    def __call__(self, symbols, freq, fields=None, start=None, end=None, length=None, adjust=None, fill=False):
         handler, db = self.get(freq)
         fields = self.indexer(fields)
 
@@ -65,13 +72,4 @@ class Candle(BasicConfig):
 
 
 if __name__ == '__main__':
-    from fxdayu_data import MongoHandler
-    from fxdayu_data.data_api.adjust import Adjust
-
-    handler = MongoHandler.params(host='192.168.0.102')
-
-    candle = Candle()
-    candle.set(handler, H="Stock_H")
-    candle.set_adjust(Adjust.db(handler.client['adjust']))
-
-    print candle(("000001.XSHE", "000002.XSHE"), "H", length=50, adjust=True)
+    print pd.date_range("2016-01-01", "2016-01-31", freq='1min').da

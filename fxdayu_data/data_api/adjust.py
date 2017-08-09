@@ -2,9 +2,6 @@ from fxdayu_data.data_api import BasicConfig
 from fxdayu_data.handler.mongo_handler import read
 
 
-PRICE = ['open', 'high', 'low', 'close']
-
-
 class Adjust(BasicConfig):
 
     def __init__(self):
@@ -38,7 +35,7 @@ def calculate(table, candle):
         for start, end, value in locate_range(table, start, end):
             adjust_price(candle, value, start, end)
     else:
-        candle[PRICE] *= table.ix[-1, 'adjust']
+        candle *= table.ix[-1, 'adjust']
 
     return candle
 
@@ -50,7 +47,7 @@ def in_position(table, pos):
 def adjust_price(candle, value, begin, stop):
     begin = candle.index.searchsorted(begin)
     stop = candle.index.searchsorted(stop) if stop is not None else None
-    candle.ix[begin:stop, PRICE] *= value
+    candle.iloc[begin:stop] *= value
 
 
 def locate_range(table, start, end):
