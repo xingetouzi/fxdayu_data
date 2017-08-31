@@ -45,3 +45,22 @@ def show():
     for item in DataConfig.get_config_paths().items():
         print("%s: %s" % item)
 
+
+@config.command()
+@click.argument("path", default="config.py")
+def export(path):
+    """Export default config"""
+    from fxdayu_data.default import config
+    import os
+
+    if os.path.isdir(path):
+        path = os.path.join(path, "config.py")
+
+    with open(path, "w") as f:
+        f.write(config)
+
+
+if __name__ == '__main__':
+    import sys
+    sys.argv.append("export")
+    config()
