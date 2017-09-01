@@ -13,11 +13,14 @@ REQUIRES = ['numpy>=1.11.0',
 
 setup(
     name="fxdayu_data",
-    version="0.1.16",
+    version="0.2.0",
     packages=["fxdayu_data",
               "fxdayu_data.handler",
               "fxdayu_data.collector",
               "fxdayu_data.data_api",
+              "fxdayu_data.data_api.basic",
+              "fxdayu_data.data_api.mongo",
+              "fxdayu_data.data_api.bundle",
               "fxdayu_data.tools"],
     install_requires=REQUIRES,
     entry_points={"console_scripts": ["DataAPI = fxdayu_data.api_console:config"]}
