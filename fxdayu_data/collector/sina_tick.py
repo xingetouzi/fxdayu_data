@@ -41,8 +41,8 @@ HISTORY_TICK_COLUMNS = ['time', 'price', 'change', 'volume', 'amount', 'trend']
 FLOAT_TYPE = ['price', 'volume', 'amount']
 
 
-REJECTION = u"拒绝访问".encode('utf-8')
-NODATA = u"当天没有数据".encode("gbk")
+REJECTION = "拒绝访问".encode('utf-8')
+NODATA = "当天没有数据".encode("gbk")
 
 
 class SinaBreak(Exception):
@@ -83,17 +83,17 @@ def time_wrap(frame, dt, column='time'):
     if isinstance(dt, datetime):
         dt = dt.date()
 
-    frame.index = map(lambda t: datetime.combine(dt, str2time(t)), frame[column])
+    frame.index = [datetime.combine(dt, str2time(t)) for t in frame[column]]
 
     return frame.sort_index()
 
 
 def str2time(t):
-    return time(*map(int, t.split(':')))
+    return time(*list(map(int, t.split(':'))))
 
 
 def join_params(**kwargs):
-    return '&'.join(['%s=%s' % item for item in kwargs.items()])
+    return '&'.join(['%s=%s' % item for item in list(kwargs.items())])
 
 
 def make_url(*args):
@@ -185,7 +185,7 @@ def search(index):
 
 
 def sh_slice(f):
-    return f.drop(filter(drop, f.index))
+    return f.drop(list(filter(drop, f.index)))
 
 
 def sz_slice(f):

@@ -9,10 +9,10 @@ def get(name=DEFAULT):
     else:
         if name == DEFAULT:
             raise KeyError("Main config path not set, "
-                           "use command 'DataAPI config set path' to set main config path")
+                           "use command 'DataAPI add' and 'DataAPI use' to set main config to set main config path")
         else:
             raise KeyError("%s not in paths, "
-                           "use command 'DataAPI config add --name name --path path' to add config path" % name)
+                           "use command 'DataAPI add ' to add config path" % name)
 
 
 def config_paths_file():

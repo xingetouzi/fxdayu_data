@@ -1,7 +1,7 @@
 # encoding:utf-8
 import os
 from fxdayu_data import DataConfig
-from fxdayu_data.data_api.info import BasicInfo
+from fxdayu_data.data_api.basic.info import BasicInfo
 
 __all__ = ["init_config", "set_file", "candle", "factor", "get", "MarketIndex"]
 
@@ -9,14 +9,18 @@ try:
     FILE = DataConfig.get()
 except Exception as e:
     print(e)
-    FILE = None
+    FILE = ""
 
 
 def exec_config_file():
-    try:
-        execfile(FILE, globals())
-    except NameError:
-        exec (open(FILE).read(), globals())
+    import os
+    if os.path.isfile(FILE):
+        try:
+            exec(compile(open(FILE).read(), FILE, 'exec'), globals())
+        except Exception as e:
+            print(e)
+    else:
+        print("Config file: '{}' does not exist.".format(FILE))
 
 
 def init_config():

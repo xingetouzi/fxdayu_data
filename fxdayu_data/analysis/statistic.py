@@ -16,7 +16,7 @@ def advances(candles, hl_period=20, index=-1):
 
     hl = slice(1+index-hl_period, index+1) if index != -1 else slice(-hl_period, None)
 
-    for name, candle in candles.iteritems():
+    for name, candle in candles.items():
         # 读取数据
         try:
             if candle.high[hl].max() == candle.iloc[index].high:
@@ -43,10 +43,10 @@ def advances(candles, hl_period=20, index=-1):
                 left += 1
 
         except AttributeError as ae:
-            print ("%s not supported" % name)
-            print (ae.message)
+            print(("%s not supported" % name))
+            print((ae.message))
         except IndexError:
-            print ("length of %s not enough" % name)
+            print(("length of %s not enough" % name))
 
     return {'high': high, 'low': low,
             'up': up, 'down': down,
@@ -69,7 +69,7 @@ def frame_map(frame, mapper):
         return mapper(frame)
     elif isinstance(frame, pd.Panel):
         mapped = {}
-        for item, df in frame.iteritems():
+        for item, df in frame.items():
             mapped[item] = mapper(df)
         return pd.Panel.from_dict(mapped)
 

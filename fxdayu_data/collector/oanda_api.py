@@ -20,7 +20,7 @@ def set_time_index(frame, source='time', **kwargs):
 def data_transfer(**kwargs):
     def transfer(result):
         for doc in result:
-            for key, func in kwargs.items():
+            for key, func in list(kwargs.items()):
                 doc[key] = func(doc[key])
         return result
 

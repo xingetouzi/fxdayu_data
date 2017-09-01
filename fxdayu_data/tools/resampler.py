@@ -17,7 +17,7 @@ class TimeEdge():
     def __call__(self, x):
         self.range(x[-1])
         return pd.DatetimeIndex(
-            reversed(map(self.scheduler, reversed(x)))
+            reversed(list(map(self.scheduler, reversed(x))))
         )
 
     def scheduler(self, t):

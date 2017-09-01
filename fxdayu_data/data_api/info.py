@@ -24,21 +24,9 @@ class MongoInfo(BasicInfo):
         return tuple(self.db['codes'].find_one({KEY: name})[VALUE])
 
 
-
 def unfold(code):
     code = "%06.f" % code
     if code.startswith("6"):
         return code + '.XSHG'
     else:
         return code + '.XSHE'
-
-
-if __name__ == '__main__':
-    from pymongo import MongoClient
-
-    client = MongoClient(port=37017)
-    # col = client['info']['codes']
-
-    info = MongoInfo()
-    info.set(client['info'])
-    print info.codes('hs300')

@@ -9,7 +9,7 @@ from fxdayu_data.handler.mongo_handler import MongoHandler
 class CandleReader(object):
 
     def __init__(self, db_config):
-        if isinstance(db_config, (str, unicode)):
+        if isinstance(db_config, str):
             import json
             self.config = json.load(open(db_config))
         else:
@@ -27,11 +27,11 @@ class CandleReader(object):
         return self.config.get(frequency).get('db')
 
     def read(self, codes, frequency=None, index='datetime', start=None, end=None, length=None, **kwargs):
-        if isinstance(codes, (str, unicode)):
+        if isinstance(codes, str):
             return self._read(codes, self._get_db(frequency), index, start, end, length, **kwargs)
         elif isinstance(codes, dict):
             return {key: self.read(value, key, index, start, end, length, **kwargs)
-                    for key, value in codes.items()}
+                    for key, value in list(codes.items())}
         elif isinstance(codes, Iterable):
             return {code: self._read(code, self._get_db(frequency), index, start, end, length, **kwargs)
                     for code in codes}
@@ -43,4 +43,4 @@ if __name__ == '__main__':
     from datetime import datetime
 
     cr = CandleReader("config.json")
-    print cr.read({"min1": ['sh600000', 'sh600036']}, start=datetime(2017, 5, 19))
+    print(cr.read({"min1": ['sh600000', 'sh600036']}, start=datetime(2017, 5, 19)))

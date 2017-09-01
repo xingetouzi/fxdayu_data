@@ -9,7 +9,7 @@ try:
 except ImportError:
     float64 = float
 try:
-    SINGLE = (str, int, float, unicode)
+    SINGLE = (str, int, float, str)
 except NameError:
     SINGLE = (str, int, float)
 
@@ -27,7 +27,7 @@ class RedisHandler(DataHandler):
             'volume': float64
         } if transformer is None else transformer
 
-        self.fields = self.transformer.keys()
+        self.fields = list(self.transformer.keys())
         self.pubsub = self.client.pubsub()
 
     def trans(self, key, sequence):
@@ -39,7 +39,7 @@ class RedisHandler(DataHandler):
         if isinstance(sequence, str):
             return trans(sequence)
         elif isinstance(sequence, Iterable):
-            return map(trans, sequence)
+            return list(map(trans, sequence))
         else:
             return trans(sequence)
 
@@ -110,10 +110,10 @@ class RedisHandler(DataHandler):
                 pipeline.rpush(self.join(name, index), *data[index])
             else:
                 pipeline.rpush(self.join(name, index), *data.index)
-            for key, item in data.iteritems():
+            for key, item in data.items():
                 pipeline.rpush(self.join(name, key), *item)
         elif isinstance(data, dict):
-            for key, value in data.items():
+            for key, value in list(data.items()):
                 if isinstance(value, SINGLE):
                     pipeline.rpush(self.join(name, key), value)
                 elif isinstance(value, Iterable):
@@ -161,12 +161,12 @@ class RedisHandler(DataHandler):
 
     def locate_update(self, data, name, loc=-1, pipeline=None):
         if pipeline is not None:
-            for key, value in data.items():
+            for key, value in list(data.items()):
                 pipeline.lset(self.join(self.join(name, key)), loc, value)
             return pipeline
         else:
             pipeline = self.client.pipeline()
-            for key, value in data.items():
+            for key, value in list(data.items()):
                 pipeline.lset(self.join(self.join(name, key)), loc, value)
             return pipeline.execute()
 
@@ -185,7 +185,7 @@ class RedisHandler(DataHandler):
     def delete(self, name, fields=None):
         if fields is None:
             fields = self.fields
-        return self.client.delete(*map(lambda x: self.join(name, x), fields))
+        return self.client.delete(*[self.join(name, x) for x in fields])
 
     def subscribe(self, *args, **kwargs):
         self.pubsub.subscribe(*args, **kwargs)

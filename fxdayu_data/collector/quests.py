@@ -1,6 +1,6 @@
 # encoding:utf-8
 try:
-    from Queue import Queue, Empty
+    from queue import Queue, Empty
 except ImportError:
     from queue import Queue, Empty
 from threading import Thread
@@ -65,7 +65,7 @@ class QuestHandler(object):
             thread.start()
 
     def join(self):
-        for name, thread in self._threads.items():
+        for name, thread in list(self._threads.items()):
             thread.join()
 
     def stop(self):
@@ -74,7 +74,7 @@ class QuestHandler(object):
         self.clear()
 
     def clear(self):
-        for name, thread in self._threads.copy().items():
+        for name, thread in list(self._threads.copy().items()):
             if not thread.is_alive:
                 self._threads.pop(name)
 
@@ -87,9 +87,9 @@ class QuestHandler(object):
 
             if isinstance(quest, Quest):
                 try:
-                    print(quest.run())
+                    print((quest.run()))
                 except Exception as e:
-                    print "Exception: {}\n" \
+                    print("Exception: {}\n" \
                           "Function: {}\n" \
                           "args: {}\n"\
-                          "kwargs: {}".format(e, quest.function, quest.args, quest.kwargs)
+                          "kwargs: {}".format(e, quest.function, quest.args, quest.kwargs))

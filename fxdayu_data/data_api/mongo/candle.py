@@ -1,16 +1,10 @@
 # encoding:utf-8
-from collections import Iterable
+from fxdayu_data.data_api.basic.candle import BasicCandle, normalize
 import six
 import pandas as pd
 
-from fxdayu_data.data_api import BasicConfig, lru_cache
+from fxdayu_data.data_api import lru_cache
 from fxdayu_data.handler.mongo_handler import ensure_index
-
-
-try:
-    SINGLE = (str, str)
-except NameError:
-    SINGLE = str
 
 
 def adjust_candle(frame, adjust_factor, price):
@@ -24,14 +18,10 @@ def replace(old, new):
     return lambda code: code.replace(old, new)
 
 
-class Candle(BasicConfig):
-
-    COLUMNS = ['datetime', 'open', 'high', 'low', 'close', 'volume']
-    PRICE = ['open', 'high', 'low', 'close']
+class Candle(BasicCandle):
 
     def __init__(self):
         self.freq = {}
-        self.indexer = ensure_index('datetime', self.COLUMNS)
         self.adjust = None
 
     def set_adjust(self, adjust):
@@ -54,7 +44,6 @@ class Candle(BasicConfig):
     @lru_cache(128)
     def reads(self, symbols, freq, fields=None, start=None, end=None, length=None, adjust=None, fill=False):
         handler, db = self.get(freq)
-        fields = self.indexer(fields)
 
         if isinstance(symbols, six.string_types):
             return self.read(handler, db, symbols, fields, start, end, length, adjust)
@@ -63,17 +52,8 @@ class Candle(BasicConfig):
                 {symbol: self.read(handler, db, symbol, fields, start, end, length, adjust) for symbol in symbols}
             )
 
-    @lru_cache(128)
-    def __call__(self, symbols, freq, fields=None, start=None, end=None, length=None, adjust=None, fill=False):
-        handler, db = self.get(freq)
-        fields = self.indexer(fields)
-
-        if isinstance(symbols, six.string_types):
-            return self.read(handler, db, symbols, fields, start, end, length, adjust)
-        else:
-            return pd.Panel.from_dict(
-                {symbol: self.read(handler, db, symbol, fields, start, end, length, adjust) for symbol in symbols}
-            )
+    def __call__(self, symbols, freq, fields=None, start=None, end=None, length=None, adjust=None):
+        return self.reads(*normalize(symbols, freq, fields, start, end, length, adjust))
 
     def set(self, handler, **freq):
         for f, db in list(freq.items()):
@@ -81,7 +61,3 @@ class Candle(BasicConfig):
 
     def get(self, freq):
         return self.freq[freq]
-
-
-if __name__ == '__main__':
-    print(pd.date_range("2016-01-01", "2016-01-31", freq='1min').da)

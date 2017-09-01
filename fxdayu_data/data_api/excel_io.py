@@ -28,10 +28,10 @@ class Excel(BasicConfig):
         for arg in args:
             self.paths[arg.split('.')[0]] = '{}{}'.format(dir_path, arg)
 
-        for key, value in kwargs.items():
+        for key, value in list(kwargs.items()):
             self.paths[key] = '{}{}'.format(dir_path, value)
 
     def set_dir(self, dir_path):
         import os
         for dirpath, dirnames, filenames in os.walk(dir_path):
-            self.sets(dirpath, *filter(lambda name: name.endswith('.xlsx'), filenames))
+            self.sets(dirpath, *[name for name in filenames if name.endswith('.xlsx')])

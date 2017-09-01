@@ -46,7 +46,7 @@ def default_type(*types, **kw_types):
             for obj, cls in zip(args, types):
                 if not isinstance(obj, cls):
                     raise TypeError("Expected %s, got %s" % (cls, type(obj)))
-            for key, cls in kw_types.items():
+            for key, cls in list(kw_types.items()):
                 try:
                     obj = kwargs[key]
                 except KeyError:
@@ -70,7 +70,7 @@ class MongoHandler(DataHandler):
         self.db = db
 
         if isinstance(users, dict):
-            for db_name, config in users.items():
+            for db_name, config in list(users.items()):
                 self.client[db_name].authenticate(config['name'], config['password'])
 
     def __getitem__(self, item):
@@ -207,8 +207,8 @@ class MongoHandler(DataHandler):
                 data[index] = data.index
             return [doc[1].to_dict() for doc in data.iterrows()]
         elif isinstance(data, dict):
-            key, value = list(map(lambda *args: args, *data.items()))
-            return list(map(lambda *args: dict(map(lambda x, y: (x, y), key, args)), *value))
+            key, value = list(map(lambda *args: args, *list(data.items())))
+            return list(map(lambda *args: dict(list(map(lambda x, y: (x, y), key, args))), *value))
         elif isinstance(data, pd.Series):
             if data.name is None:
                 raise ValueError('name of series: data is None')
@@ -216,7 +216,7 @@ class MongoHandler(DataHandler):
             if index is not None:
                 return list(map(lambda k, v: {index: k, name: v}, data.index, data))
             else:
-                return list(map(lambda v: {data.name: v}, data))
+                return list([{data.name: v} for v in data])
         else:
             return data
 
@@ -232,7 +232,7 @@ def auth(client, users):
         import json
         users = json.load(open(users))
 
-    for db_name, config in users.items():
+    for db_name, config in list(users.items()):
         client[db_name].authenticate(**config)
 
 
@@ -242,8 +242,8 @@ def normalize(data, index=None):
             data[index] = data.index
         return [doc[1].to_dict() for doc in data.iterrows()]
     elif isinstance(data, dict):
-        key, value = list(map(lambda *args: args, *data.items()))
-        return list(map(lambda *args: dict(map(lambda x, y: (x, y), key, args)), *value))
+        key, value = list(map(lambda *args: args, *list(data.items())))
+        return list(map(lambda *args: dict(list(map(lambda x, y: (x, y), key, args))), *value))
     elif isinstance(data, pd.Series):
         if data.name is None:
             raise ValueError('name of series: data is None')
@@ -251,7 +251,7 @@ def normalize(data, index=None):
         if index is not None:
             return list(map(lambda k, v: {index: k, name: v}, data.index, data))
         else:
-            return list(map(lambda v: {data.name: v}, data))
+            return list([{data.name: v} for v in data])
     else:
         return data
 
@@ -261,9 +261,9 @@ def read(collection, index='datetime', start=None, end=None, length=None, **kwar
         if index:
             kwargs = create_filter(index, start, end, length, kwargs)
 
-        if index:
             if 'sort' not in kwargs:
                 kwargs['sort'] = [(index, 1)]
+
         data = list(collection.find(**kwargs))
 
         for key, value in kwargs.get('sort', []):
@@ -331,3 +331,17 @@ def inplace(collection, data, index='datetime'):
     else:
         raise TypeError("Type of db should be %s not %s" % (Collection, type(collection)))
 
+
+if __name__ == '__main__':
+    client = pymongo.MongoClient("192.168.0.101")
+    local = pymongo.MongoClient()
+    db = local['py3test']
+    from datetime import datetime
+
+    code = "000001.XSHE"
+
+    candle = read(client['Stock_D'][code], start=datetime(2016, 12, 1), length=50)
+
+    print(
+        update(db[code], candle)
+    )

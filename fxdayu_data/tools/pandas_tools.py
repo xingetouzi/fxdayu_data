@@ -25,7 +25,7 @@ def random_frame(index, columns):
 def pipeline(*args, **kwargs):
     from itertools import chain
     return pd.concat(
-        chain(map(lambda f: f.stack(), args),
-              map(lambda item: item[1].stack()._set_name(item[0]), kwargs.items())),
+        chain([f.stack() for f in args],
+              [item[1].stack()._set_name(item[0]) for item in list(kwargs.items())]),
         axis=1
     )

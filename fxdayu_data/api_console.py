@@ -42,7 +42,7 @@ def delete(names):
 @config.command()
 def show():
     """Show all config paths"""
-    for item in DataConfig.get_config_paths().items():
+    for item in list(DataConfig.get_config_paths().items()):
         print("%s: %s" % item)
 
 
@@ -59,8 +59,3 @@ def export(path):
     with open(path, "w") as f:
         f.write(config)
 
-
-if __name__ == '__main__':
-    import sys
-    sys.argv.append("export")
-    config()

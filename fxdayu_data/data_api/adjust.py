@@ -21,7 +21,7 @@ class Adjust(BasicConfig):
             table = self.read(code)
             if atype != "after":
                 table['adjust'] = table['adjust']/table['adjust'].iloc[-1]
-                print table
+                print(table)
 
             return calculate(table, frame)
         else:
@@ -77,7 +77,7 @@ def main():
     code = '000001.XSHE'
     from datetime import datetime
 
-    print adj.cal(code, read(stock[code], start=datetime(2017, 7, 3)))
+    print(adj.cal(code, read(stock[code], start=datetime(2017, 7, 3))))
 
 
 if __name__ == '__main__':

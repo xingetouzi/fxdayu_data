@@ -1,6 +1,6 @@
 # encoding:utf-8
 try:
-    from Queue import Queue, Empty
+    from queue import Queue, Empty
 except ImportError:
     from queue import Queue, Empty
 from datetime import time as d_time
@@ -117,7 +117,7 @@ class StockInstance(object):
             return True, dct
 
     def refresh(self, **kwargs):
-        for key, value in kwargs.items():
+        for key, value in list(kwargs.items()):
             self.__setattr__(key, value)
 
 
@@ -202,7 +202,7 @@ class SinaQuote(object):
             self._quoting = True
         return self
 
-    def next(self):
+    def __next__(self):
         if self._quoting:
             return self.quote(self.quote_url)
         else:
@@ -244,9 +244,9 @@ class SinaQuote(object):
     def stream(self, handler):
         while self._quoting:
             try:
-                quotation = self.next()
+                quotation = next(self)
             except Exception as e:
-                print e
+                print(e)
                 logging.error(e.message)
                 continue
 
@@ -297,7 +297,7 @@ class QuotesManager(object):
     def quote(self, name=None, codes=None, quoter=None):
         if not quoter:
             if name and codes:
-                print name, codes
+                print(name, codes)
             else:
                 raise ValueError("Neither of name and codes should be None if quoter is None")
             try:
@@ -330,7 +330,7 @@ class QuotesManager(object):
     def stop(self):
         if self._trading:
             self._trading = False
-            for quoter in self._quoters.values():
+            for quoter in list(self._quoters.values()):
                 quoter.stop()
             self.main.join()
 
@@ -344,19 +344,19 @@ class QuotesManager(object):
             quest.run()
 
     def listen(self, **kwargs):
-        for name, codes in kwargs.items():
+        for name, codes in list(kwargs.items()):
             self.queue.put(
                 self.Quest(self.quote, name, codes)
             )
 
     def on_quote(self, quotation):
         pl = self.db.client.pipeline()
-        for name, value in quotation.iteritems():
+        for name, value in quotation.items():
             try:
                 dt = datetime.strptime(value.date + ' ' + value.time, "%Y-%m-%d %H:%M:%S")
                 self.memories[name].on_quote(dt, float(value.price), float(value.volume), pl)
             except Exception as e:
-                print e
+                print(e)
                 logging.error(e.message)
         pl.publish('tick', datetime.now())
         pl.execute()

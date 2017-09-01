@@ -11,11 +11,17 @@ class BLPTable(object):
     def __init__(self, rootdir, index):
         self.table = bcolz.ctable(rootdir=rootdir, mode='r')
         self.line_map = self.table.attrs.attrs['line_map']
-        self.index = self.table.cols[index]
+        self.index_col = index
+        self.columns = list(self.table.names)
+        self.columns.remove(index)
+
+    @property
+    def index(self):
+        return self.table.cols[self.index_col]
 
     def read(self, names, start=None, end=None, length=None, columns=None):
         if columns is None:
-            columns = self.table.names
+            columns = self.columns
         if isinstance(columns, six.string_types):
             columns = (columns,)
 
@@ -81,24 +87,15 @@ class MapTable(BLPTable):
     def _read_line(self, index, column):
         array = self.table.cols[column][index]
         if column in self.columns_map:
-            return np.array(list(map(self.columns_map[column], array)))
+            return list(map(self.columns_map[column], array))
         else:
             return array
 
     def _read_index(self, index):
         if self.blp2index:
-            return np.array(list(map(self.blp2index, self.index[index])))
+            return list(map(self.blp2index, self.index[index]))
         else:
             return self.index[index]
-    #
-    # def _read(self, name, start, end, length, columns):
-    #     result = super(MapTable, self)._read(name, start, end, length, columns)
-    #     if self.blp2index:
-    #         result.index = result.index.map(self.blp2index)
-    #     for key in result.columns:
-    #         if key in self.columns_map:
-    #             result[key] = result[key].apply(self.columns_map[key])
-    #     return result
 
 
 def date2int(date):
