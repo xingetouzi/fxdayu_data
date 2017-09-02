@@ -8,6 +8,7 @@ REQUIRES = ['numpy>=1.11.0',
             'pymongo>=3.3.0',
             'lxml>=3.7.3',
             'pandas-datareader>=0.2.1',
+            'click>=6.7',
             'backports.functools_lru_cache>=1.4']
 
 
