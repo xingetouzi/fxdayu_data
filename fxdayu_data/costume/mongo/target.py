@@ -27,5 +27,5 @@ class MongoTarget(BasicTarget):
 
     def inplace(self, frame):
         if isinstance(frame, pd.DataFrame):
-            for name, item in frame.iteritems():
+            for name, item in frame.iterrows():
                 self.set(name, item.replace(0, NaN).dropna().to_dict())
