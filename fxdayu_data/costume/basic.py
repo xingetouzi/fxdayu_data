@@ -8,6 +8,13 @@ class BasicCostume(object):
         pass
 
 
+class Costume(BasicCostume):
+
+    @property
+    def target(self):
+        return BasicTarget()
+
+
 class BasicTarget(BasicCostume):
 
     def inplace(self, frame):
@@ -15,3 +22,4 @@ class BasicTarget(BasicCostume):
 
     def all(self):
         pass
+

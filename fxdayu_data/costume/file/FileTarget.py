@@ -6,10 +6,11 @@ class FileTarget(BasicTarget):
 
     def __init__(self, name):
         self.name = name
+        self.index = "datetime"
         try:
-            self._table = pd.read_csv()
+            self._table = pd.read_csv(self.name, index_col=self.index)
         except IOError:
-            self._table = pd.DataFrame()
+            self._table = pd.DataFrame(index=pd.Index(name=self.index))
 
     def flush(self):
         self._table.to_csv(self.name)

@@ -1,13 +1,14 @@
-from fxdayu_data.costume.basic import BasicCostume
+# encoding:utf-8
+from fxdayu_data.costume.basic import Costume
 import pickle
 import six
 import os
 
 
-class FileCostume(BasicCostume):
+class FileCostume(Costume):
 
     def __init__(self, root=""):
-        self.root = ""
+        self.root = root
         self._target = None
 
     def absolute(self, key):
@@ -15,17 +16,18 @@ class FileCostume(BasicCostume):
 
     def set(self, key, value):
         if isinstance(value, six.string_types):
-            with open(key, "w") as f:
+            with open(self.absolute(key), "w") as f:
                 f.write(value)
         else:
-            with open(key, "w") as f:
+            with open(self.absolute(key), "wb") as f:
                 pickle.dump(value, f)
 
     def get(self, key):
-        with open(key, "f") as f:
-            try:
-                return pickle.loads(f)
-            except:
+        try:
+            with open(self.absolute(key), "rb") as f:
+                return pickle.load(f)
+        except:
+            with open(self.absolute(key), "r") as f:
                 return f.read()
 
     @property
@@ -38,5 +40,5 @@ class FileCostume(BasicCostume):
             return self._target
 
 
-def create(root):
-    return FileCostume(root)
+def create(general, external=None):
+    return FileCostume(general)
