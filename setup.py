@@ -14,7 +14,7 @@ REQUIRES = ['numpy>=1.11.0',
 
 setup(
     name="fxdayu_data",
-    version="0.2.1",
+    version="0.2.2",
     packages=["fxdayu_data",
               "fxdayu_data.handler",
               "fxdayu_data.collector",

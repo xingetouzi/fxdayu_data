@@ -17,7 +17,7 @@ class BLPAdjust(BasicAdjust):
         )
 
     def read(self, code):
-        return self.table.read(code, columns=self.col)[self.value]
+        return self.table.read(code, fields=self.col)[self.value]
 
 
 def int2datetime(num):
@@ -28,6 +28,7 @@ def int2datetime(num):
     num -= month
     year = num / 10000
     return datetime(int(year), int(month/100), int(day))
+
 
 
 if __name__ == '__main__':

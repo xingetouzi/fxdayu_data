@@ -17,7 +17,7 @@ class BLPCandle(BasicCandle):
 
     @lru_cache(maxsize=256)
     def read(self, symbols, freq, fields=None, start=None, end=None, length=None, adjust=None):
-        candle = self.tables[freq].read(symbols, start, end, length, fields)
+        candle = self.tables[freq].read(symbols, fields, start, end, length)
         if adjust is None:
             return candle
         else:
@@ -66,7 +66,7 @@ class BLPFactor(BasicConfig):
 
     @lru_cache(maxsize=256)
     def __call__(self, symbols, fields=None, start=None, end=None, length=None):
-        return self.reader.read(symbols, start, end, length, fields)
+        return self.reader.read(symbols, fields, start, end, length)
 
     def find(self, name):
         return self.reader.find(name)

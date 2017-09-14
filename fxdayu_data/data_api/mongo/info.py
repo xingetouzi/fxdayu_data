@@ -6,8 +6,8 @@ VALUE = "value"
 
 class MongoInfo(BasicInfo):
 
-    def __init__(self):
-        self.db = None
+    def __init__(self, db=None):
+        self.db = db
 
     def set(self, db):
         self.db = db

@@ -48,14 +48,19 @@ def show():
 
 @config.command()
 @click.argument("path", default="config.py")
-def export(path):
+@click.option("-t", "--type", default="mongo", required=False,
+              help="Specify config type: mongo or bundle, default: mongo.")
+@click.option("-n", "--name", default=None, required=False,
+              help="Add this file to DataAPI with name input.")
+def export(path, type, name):
     """Export default config"""
-    from fxdayu_data.default import config
+    from fxdayu_data import default
     import os
 
     if os.path.isdir(path):
         path = os.path.join(path, "config.py")
 
     with open(path, "w") as f:
-        f.write(config)
-
+        f.write(default.defaults.get(type, default.MONGOCONFIG))
+        if name:
+            add.callback(name, os.path.abspath(path))

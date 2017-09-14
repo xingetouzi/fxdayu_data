@@ -264,6 +264,12 @@ def read(collection, index='datetime', start=None, end=None, length=None, **kwar
             if 'sort' not in kwargs:
                 kwargs['sort'] = [(index, 1)]
 
+            projection = kwargs.get("projection", None)
+            if projection:
+                projection = set(projection)
+                projection.add(index)
+                kwargs["projection"] = dict.fromkeys(projection, 1)
+
         data = list(collection.find(**kwargs))
 
         for key, value in kwargs.get('sort', []):
@@ -330,18 +336,3 @@ def inplace(collection, data, index='datetime'):
         return {'collection': collection.name, 'start': data[0], 'end': data[-1]}
     else:
         raise TypeError("Type of db should be %s not %s" % (Collection, type(collection)))
-
-
-if __name__ == '__main__':
-    client = pymongo.MongoClient("192.168.0.101")
-    local = pymongo.MongoClient()
-    db = local['py3test']
-    from datetime import datetime
-
-    code = "000001.XSHE"
-
-    candle = read(client['Stock_D'][code], start=datetime(2016, 12, 1), length=50)
-
-    print(
-        update(db[code], candle)
-    )

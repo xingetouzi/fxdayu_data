@@ -3,10 +3,11 @@ import numpy as np
 import pandas as pd
 from collections import Iterable
 from datetime import datetime, timedelta
+from fxdayu_data.data_api.basic import BasicReader
 import six
 
 
-class BLPTable(object):
+class BLPTable(BasicReader):
 
     def __init__(self, rootdir, index):
         self.table = bcolz.ctable(rootdir=rootdir, mode='r')
@@ -19,20 +20,20 @@ class BLPTable(object):
     def index(self):
         return self.table.cols[self.index_col]
 
-    def read(self, names, start=None, end=None, length=None, columns=None):
-        if columns is None:
-            columns = self.columns
-        if isinstance(columns, six.string_types):
-            columns = (columns,)
+    def read(self, names, fields=None, start=None, end=None, length=None):
+        if fields is None:
+            fields = self.columns
+        if isinstance(fields, six.string_types):
+            fields = (fields,)
 
         if isinstance(names, six.string_types):
-            return self._read(names, start, end, length, columns)
+            return self._read(names, fields, start, end, length)
         elif isinstance(names, Iterable):
             return pd.Panel.from_dict(
-                {name: self._read(name, start, end, length, columns) for name in names}
+                {name: self._read(name, fields, start, end, length) for name in names}
             )
 
-    def _read(self, name, start, end, length, columns):
+    def _read(self, name, columns, start, end, length):
         index_slice = self._index_slice(name, start, end, length)
 
         return pd.DataFrame(
@@ -77,12 +78,12 @@ class MapTable(BLPTable):
         self.blp2index = blp2index
         self.columns_map = columns_map
 
-    def read(self, names, start=None, end=None, length=None, columns=None):
+    def read(self, names, fields=None, start=None, end=None, length=None):
         if self.index2blp:
             start = self.index2blp(start)
             end = self.index2blp(end)
 
-        return super(MapTable, self).read(names, start, end, length, columns)
+        return super(MapTable, self).read(names, fields, start, end, length)
 
     def _read_line(self, index, column):
         array = self.table.cols[column][index]
@@ -128,16 +129,16 @@ class ClassifiedTable(MapTable):
         else:
             raise KeyError('Cannot find %s' % name)
 
-    def read(self, names, start=None, end=None, length=None, columns=None):
+    def read(self, names, fields=None, start=None, end=None, length=None):
         if isinstance(names, six.string_types):
             if '.' not in names:
                 names = self.find(names)
 
-        return super(ClassifiedTable, self).read(names, start, end, length, columns)
+        return super(ClassifiedTable, self).read(names, fields, start, end, length)
 
-    def _read(self, name, start, end, length, columns):
+    def _read(self, name, columns, start, end, length):
         try:
-            result = super(ClassifiedTable, self)._read(name, start, end, length, columns)
+            result = super(ClassifiedTable, self)._read(name, columns, start, end, length)
         except KeyError:
             return pd.DataFrame(columns=columns)
 
@@ -155,21 +156,21 @@ class DateCandleTable(ClassifiedTable):
     def __init__(self, rootdir):
         super(DateCandleTable, self).__init__(rootdir, 'date',  date2int, num2date, **self.price_mapper)
 
-    def read(self, names, start=None, end=None, length=None, columns=None):
-        if columns is None:
-            columns = self.COLUMNS
-        elif isinstance(columns, six.string_types):
-            if not (columns == 'volume'):
-                columns = (columns, 'volume')
+    def read(self, names, fields=None, start=None, end=None, length=None):
+        if fields is None:
+            fields = self.COLUMNS
+        elif isinstance(fields, six.string_types):
+            if not (fields == 'volume'):
+                fields = (fields, 'volume')
         else:
-            if 'volume' not in columns:
-                columns = list(columns)
-                columns.append('volume')
+            if 'volume' not in fields:
+                fields = list(fields)
+                fields.append('volume')
 
-        return super(DateCandleTable, self).read(names, start, end, length, columns)
+        return super(DateCandleTable, self).read(names, fields, start, end, length)
 
-    def _read(self, name, start, end, length, columns):
-        result = super(DateCandleTable, self)._read(name, start, end, length, columns)
+    def _read(self, name, columns, start, end, length):
+        result = super(DateCandleTable, self)._read(name, columns, start, end, length)
         return result[result['volume'] != 0]
 
 
@@ -182,17 +183,17 @@ class FrameTable(BLPTable):
         self.blp2index = blp2index
         self.value_map = value_map
 
-    def read(self, names, start=None, end=None, length=None, columns=None):
+    def read(self, names, fields=None, start=None, end=None, length=None):
         if self.index2blp:
             start = self.index2blp(start)
             end = self.index2blp(end)
 
         if isinstance(names, six.string_types):
-            return self._read(names, start, end, length, columns)
+            return self._read(names, fields, start, end, length)
         else:
-            return pd.DataFrame({name: self._read(name, start, end, length, columns) for name in names})
+            return pd.DataFrame({name: self._read(name, fields, start, end, length) for name in names})
 
-    def _read(self, name, start, end, length, columns):
+    def _read(self, name, columns, start, end, length):
         index_slice = self._index_slice(name, start, end, length)
         return pd.Series(
             self._read_line(index_slice, None),
@@ -257,11 +258,11 @@ class FactorReader(ClassifiedTable):
         self.columns = tuple(self.table.attrs['factors'])
         self.ratio = self.table.attrs['default_ratio']
 
-    def read(self, names, start=None, end=None, length=None, columns=None):
-        if columns is None:
-            columns = self.columns
+    def read(self, names, fields=None, start=None, end=None, length=None):
+        if fields is None:
+            fields = self.columns
 
-        return super(FactorReader, self).read(names, start, end, length, columns)
+        return super(FactorReader, self).read(names, fields, start, end, length)
 
-    def _read(self, name, start, end, length, columns):
-        return super(FactorReader, self)._read(name, start, end, length, columns).replace(0, np.nan) / self.ratio
+    def _read(self, name, columns, start, end, length):
+        return super(FactorReader, self)._read(name, columns, start, end, length).replace(0, np.nan) / self.ratio

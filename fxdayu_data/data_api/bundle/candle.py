@@ -30,7 +30,7 @@ class BLPCandle(BasicCandle):
 
     def _read(self, table, symbol, fields, start, end, length, adjust):
         try:
-            result = table.read(symbol, start, end, length, fields)
+            result = table.read(symbol, fields, start, end, length)
         except:
             return pd.DataFrame()
 
@@ -109,8 +109,8 @@ class DateCandleTable(BLPTable):
     def __init__(self, rootdir):
         super(DateCandleTable, self).__init__(rootdir, "datetime")
 
-    def read(self, names, start=None, end=None, length=None, columns=None):
-        return super(DateCandleTable, self).read(names, time2int(start), time2int(end), length, columns)
+    def read(self, names, fields=None, start=None, end=None, length=None):
+        return super(DateCandleTable, self).read(names, fields, time2int(start), time2int(end), length)
 
     def _read_line(self, index, column):
         if column != "volume":

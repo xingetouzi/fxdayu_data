@@ -4,7 +4,6 @@ import six
 import pandas as pd
 
 from fxdayu_data.data_api import lru_cache
-from fxdayu_data.handler.mongo_handler import ensure_index
 
 
 def adjust_candle(frame, adjust_factor, price):
@@ -28,7 +27,7 @@ class Candle(BasicCandle):
         self.adjust = adjust
 
     def read(self, handler, db, symbol, fields, start, end, length, adjust):
-        data = handler.read(symbol, db, start=start, end=end, length=length, projection=fields)
+        data = handler.read(symbol, start=start, end=end, length=length)
 
         if adjust:
             if "volume" in data.columns:

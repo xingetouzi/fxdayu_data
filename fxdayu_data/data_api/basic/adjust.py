@@ -1,4 +1,5 @@
 from fxdayu_data.data_api.basic import BasicConfig
+import pandas as pd
 
 
 class BasicAdjust(BasicConfig):
@@ -9,7 +10,11 @@ class BasicAdjust(BasicConfig):
             if atype != "after":
                 series = series/series.iloc[-1]
 
-            return calculate(series, frame)
+            if "volume" in frame:
+                v = frame.pop("volume")
+                return pd.concat((calculate(series, frame), v), 1)
+            else:
+                return calculate(series, frame)
         else:
             return frame
 

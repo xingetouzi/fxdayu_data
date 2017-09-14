@@ -16,7 +16,7 @@ class BLPFactor(BasicFactor):
 
     @lru_cache(128)
     def read(self, symbols, fields=None, start=None, end=None, length=None):
-        return self.table.read(symbols, start, end, length, fields)
+        return self.table.read(symbols, fields, start, end, length)
 
     def __call__(self, symbols, fields=None, start=None, end=None, length=None):
         if not isinstance(symbols, six.string_types):
