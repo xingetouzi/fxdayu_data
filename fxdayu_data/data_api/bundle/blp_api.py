@@ -1,4 +1,4 @@
-from fxdayu_data.data_api import BasicConfig, lru_cache
+from fxdayu_data.data_api import lru_cache
 from fxdayu_data.data_api.basic.candle import BasicCandle, normalize
 from fxdayu_data.data_api.bundle.blp_reader import DateCandleTable, DateAdjustTable, FactorReader
 import pandas as pd

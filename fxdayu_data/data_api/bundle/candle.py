@@ -120,13 +120,3 @@ class DateCandleTable(BLPTable):
 
     def _read_index(self, index):
         return list(map(int2date, super(DateCandleTable, self)._read_index(index)))
-
-#
-# if __name__ == '__main__':
-#     from fxdayu_data.data_api.bundle.adjust import BLPAdjust
-#
-#     candle = BLPCandle.dir(D="X:\\Users\caimeng\.fxdayu\data\Stock_D.bcolz",
-#                            H="X:\\Users\caimeng\.fxdayu\data\Stock_H1.bcolz")
-#     candle.set_adjust(BLPAdjust.dir("X:\\Users\caimeng\.fxdayu\data\ex_cum_factor.bcolz"))
-#
-#     print(candle("000001.XSHE", "D",  length=100, adjust="after"))

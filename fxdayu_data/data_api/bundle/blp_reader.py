@@ -35,11 +35,12 @@ class BLPTable(BasicReader):
 
     def _read(self, name, columns, start, end, length):
         index_slice = self._index_slice(name, start, end, length)
-
-        return pd.DataFrame(
+        data = pd.DataFrame(
             {key: self._read_line(index_slice, key) for key in columns},
             index=self._read_index(index_slice)
         )
+        data.index.name = self.index_col
+        return data
 
     def _read_line(self, index, column):
         return self.table.cols[column][index]
@@ -48,7 +49,8 @@ class BLPTable(BasicReader):
         return self.index[index]
 
     def _index_slice(self, name, start, end, length):
-        head, tail = self.line_map[name]
+        # head, tail = self.line_map[name]
+        head, tail = self.line_map.get(name, (0, 0))
         index = self.index[head:tail]
         if start:
             s = index.searchsorted(start)
