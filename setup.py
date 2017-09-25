@@ -1,7 +1,7 @@
 from setuptools import setup
 
 
-REQUIRES = open("requirements").readlines()
+REQUIRES = open("requirements.txt").readlines()
 
 
 setup(
