@@ -1,4 +1,4 @@
-from fxdayu_data.data_api.basic import BasicConfig
+from fxdayu_data.data_api.basic.candle import BasicCandle
 from fxdayu_data.data_api import lru_cache
 import pandas as pd
 from collections import Iterable
@@ -27,7 +27,7 @@ def normalize(symbols, freq, fields, start, end, length, adjust):
             adjust)
 
 
-class Candle(BasicConfig):
+class Candle(BasicCandle):
 
     def __init__(self, adjust=None, **frequencies):
         self.frequencies = frequencies

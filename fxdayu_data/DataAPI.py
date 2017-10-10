@@ -15,10 +15,7 @@ except Exception as e:
 def exec_config_file():
     import os
     if os.path.isfile(FILE):
-        try:
-            exec(compile(open(FILE).read(), FILE, 'exec'), globals())
-        except Exception as e:
-            print(e)
+        exec(compile(open(FILE).read(), FILE, 'exec'), globals())
     else:
         print("Config file: '{}' does not exist.".format(FILE))
 
@@ -66,14 +63,6 @@ def factor(symbols, fields=None, start=None, end=None, length=None):
     :param length: int
     :return: pd.DataFrame or pd.Panel
     """
-    pass
-
-
-def excel(name, *sheetname, **kwargs):
-    pass
-
-
-def MarketIndex(code, freq, fields=None, start=None, end=None, length=None):
     pass
 
 

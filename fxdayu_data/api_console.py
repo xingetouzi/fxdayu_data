@@ -1,3 +1,4 @@
+# encoding:utf-8
 import click
 from fxdayu_data import DataConfig
 
@@ -9,7 +10,7 @@ def config():
 
 @config.command()
 @click.option("--name", '-n', default=DataConfig.DEFAULT)
-@click.option("--path", '-p')
+@click.argument("path", nargs=1)
 def add(name, path):
     """Add a config path into DataAPI"""
     if path is None:
@@ -64,3 +65,36 @@ def export(path, type, name):
         f.write(default.defaults.get(type, default.MONGOCONFIG))
         if name:
             add.callback(name, os.path.abspath(path))
+
+
+@config.command("exec")
+@click.argument("arguments", nargs=-1)
+def execute(arguments):
+    """
+    Read data from DataAPI
+    """
+
+    from fxdayu_data import DataAPI
+
+    func = arguments[0]
+
+    def catch_values(values):
+        if "," in values:
+            return values.split(",")
+        else:
+            return values
+
+    def separate_key(kv):
+        key, value = kv.split("=")
+        return key, catch_values(value)
+
+    args = []
+    kwargs = {}
+
+    for arg in arguments[1:]:
+        if "=" in arg:
+            kwargs.__setitem__(*separate_key(arg))
+        else:
+            args.append(catch_values(arg))
+
+    click.echo(DataAPI.get(func, *args, **kwargs))
