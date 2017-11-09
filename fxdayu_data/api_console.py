@@ -10,11 +10,16 @@ def config():
 
 @config.command()
 @click.option("--name", '-n', default=DataConfig.DEFAULT)
+@click.option("--copy", "-c", is_flag=True, flag_value=True, default=False)
 @click.argument("path", nargs=1)
-def add(name, path):
+def add(name, path, copy):
     """Add a config path into DataAPI"""
-    if path is None:
-        path = name
+    if copy:
+        import shutil
+        path = shutil.copy(path, DataConfig.get_root())
+
+    import os
+    path = os.path.abspath(path)
 
     paths = DataConfig.get_config_paths()
     paths[name] = path

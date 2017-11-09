@@ -12,16 +12,21 @@ def get(name=DEFAULT):
                            "use command 'DataAPI add' and 'DataAPI use' to set main config to set main config path")
         else:
             raise KeyError("%s not in paths, "
-                           "use command 'DataAPI add ' to add config path" % name)
+                           "use command 'DataAPI add' to add config path" % name)
+
+
+def get_root():
+    import os
+    root = os.environ.get("fxdayu", os.path.expanduser(os.path.join('~', '.fxdayu')))
+    if not os.path.exists(root):
+        os.makedirs(root)
+    return root
 
 
 def config_paths_file():
     import os
 
-    root = os.environ.get("fxdayu", os.path.expanduser(os.path.join('~', '.fxdayu')))
-    if not os.path.exists(root):
-        os.makedirs(root)
-
+    root = get_root()
     return os.path.join(root, 'DataAPIConfig.json')
 
 

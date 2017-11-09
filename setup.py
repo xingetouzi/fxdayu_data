@@ -6,7 +6,7 @@ REQUIRES = open("requirements.txt").readlines()
 
 setup(
     name="fxdayu_data",
-    version="0.2.4",
+    version="0.2.5",
     packages=["fxdayu_data",
               "fxdayu_data.handler",
               "fxdayu_data.collector",
@@ -20,5 +20,8 @@ setup(
               "fxdayu_data.tools"],
     install_requires=REQUIRES,
     entry_points={"console_scripts": ["DataAPI = fxdayu_data.api_console:config"]},
-    url="https://github.com/cheatm/fxdayu_data.git"
+    url="https://github.com/cheatm/fxdayu_data.git",
+    license="Apache License v2",
+    author="Cam",
+    author_email="cam@fxdayu.com"
 )

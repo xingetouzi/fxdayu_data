@@ -5,11 +5,7 @@ from fxdayu_data.data_api.basic.info import BasicInfo
 
 __all__ = ["init_config", "set_file", "candle", "factor", "get", "MarketIndex"]
 
-try:
-    FILE = DataConfig.get()
-except Exception as e:
-    print(e)
-    FILE = ""
+FILE = DataConfig.get()
 
 
 def exec_config_file():
@@ -17,15 +13,11 @@ def exec_config_file():
     if os.path.isfile(FILE):
         exec(compile(open(FILE).read(), FILE, 'exec'), globals())
     else:
-        print("Config file: '{}' does not exist.".format(FILE))
+        raise IOError("Config file: '{}' does not exist.".format(FILE))
 
 
 def init_config():
-    try:
-        exec_config_file()
-    except IOError as ioe:
-        print(ioe)
-        return
+    exec_config_file()
 
 
 def use(name):

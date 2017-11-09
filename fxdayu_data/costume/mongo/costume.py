@@ -22,10 +22,6 @@ class MongoCostume(Costume):
 
 def create(general, external):
     from pymongo import MongoClient
-    import json
-    try:
-        client = MongoClient(**json.loads(general))
-    except json.JSONDecodeError:
-        client = MongoClient(general)
+    client = MongoClient(general, readPreference="secondaryPreferred")
     db, col = external.split(".")
     return MongoCostume(client[db][col])
