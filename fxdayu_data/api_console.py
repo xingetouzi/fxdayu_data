@@ -12,7 +12,7 @@ def config():
 @click.option("--name", '-n', default=DataConfig.DEFAULT)
 @click.option("--copy", "-c", is_flag=True, flag_value=True, default=False)
 @click.argument("path", nargs=1)
-def add(name, path, copy):
+def add(name, path, copy=False):
     """Add a config path into DataAPI"""
     if copy:
         import shutil
@@ -58,7 +58,8 @@ def show():
               help="Specify config type: mongo or bundle, default: mongo.")
 @click.option("-n", "--name", default=None, required=False,
               help="Add this file to DataAPI with name input.")
-def export(path, type, name):
+@click.option("--copy", "-c", is_flag=True, flag_value=True, default=False)
+def export(path, type, name, copy):
     """Export default config"""
     from fxdayu_data import default
     import os
@@ -69,7 +70,7 @@ def export(path, type, name):
     with open(path, "w") as f:
         f.write(default.defaults.get(type, default.MONGOCONFIG))
         if name:
-            add.callback(name, os.path.abspath(path))
+            add.callback(name, os.path.abspath(path), copy)
 
 
 @config.command("exec")
