@@ -6,3 +6,6 @@ class BasicInfo(BasicConfig):
 
     def codes(self, name):
         pass
+
+    def trade_days(self, start=None, end=None, length=None):
+        pass

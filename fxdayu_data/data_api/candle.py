@@ -17,12 +17,16 @@ def field(fields):
         return FIELDS
 
 
+def convert_time(time):
+    return pd.to_datetime(time) if isinstance(time, six.string_types) else time
+
+
 def normalize(symbols, freq, fields, start, end, length, adjust):
     return (symbols if isinstance(symbols, six.string_types) else tuple(symbols),
             freq,
             field(fields),
-            pd.to_datetime(start) if isinstance(start, six.string_types) else start,
-            pd.to_datetime(end) if isinstance(end, six.string_types) else end,
+            convert_time(start),
+            convert_time(end),
             length,
             adjust)
 

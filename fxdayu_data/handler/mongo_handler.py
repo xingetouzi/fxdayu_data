@@ -305,8 +305,6 @@ def reads(db, names=None, index='datetime', start=None, end=None, length=None, *
 def write(collection, data, index=None):
     data = normalize(data, index)
     result = collection.insert_many(data)
-    if index:
-        collection.create_index(index)
     return result
 
 
@@ -320,7 +318,6 @@ def update(collection, data, index="datetime", how='$set', upsert=True):
         result = collection.bulk_write(
             list(map(partial(create_update, index=index, how=how, upsert=upsert), data))
         )
-        collection.create_index(index)
         return result
     else:
         raise TypeError("Type of db should be %s not %s" % (Collection, type(collection)))
@@ -332,7 +329,6 @@ def inplace(collection, data, index='datetime'):
 
         collection.delete_many({index: {'$gte': data[0][index], '$lte': data[-1][index]}})
         collection.insert_many(data)
-        collection.create_index(index)
         return {'collection': collection.name, 'start': data[0], 'end': data[-1]}
     else:
         raise TypeError("Type of db should be %s not %s" % (Collection, type(collection)))
