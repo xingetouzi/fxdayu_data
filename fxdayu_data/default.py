@@ -10,6 +10,8 @@ candle = mongo.candle(client, "adjust", H="Stock_H", D="Stock_D")
 
 factor = mongo.factor(client, "factor")
 
+bonus = mongo.bonus(client, "bonus")
+
 info = mongo.info(client, "info")
 """
 

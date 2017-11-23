@@ -103,3 +103,7 @@ def execute(arguments):
             args.append(catch_values(arg))
 
     click.echo(DataAPI.get(func, *args, **kwargs))
+
+
+if __name__ == '__main__':
+    config()

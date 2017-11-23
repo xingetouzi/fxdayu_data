@@ -58,6 +58,18 @@ def factor(symbols, fields=None, start=None, end=None, length=None):
     pass
 
 
+def bonus(symbol, fields=None, start=None, end=None, length=None):
+    """
+
+    :param symbol: str
+    :param fields: str | tuple(str) | hashable array
+    :param start: datetime.datetime
+    :param end: datetime.datetime
+    :param length: int
+    :return: pd.DataFrame
+    """
+    pass
+
 info = BasicInfo()
 
 
