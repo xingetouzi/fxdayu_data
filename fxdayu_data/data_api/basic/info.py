@@ -9,3 +9,6 @@ class BasicInfo(BasicConfig):
 
     def trade_days(self, start=None, end=None, length=None):
         pass
+
+    def classification(self, code=None, classification=None):
+        pass

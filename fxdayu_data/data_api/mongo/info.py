@@ -1,5 +1,7 @@
 from fxdayu_data.data_api.basic.info import BasicInfo
 from fxdayu_data.handler.mongo_handler import read
+from collections import Iterable
+from itertools import chain
 import pandas as pd
 import six
 
@@ -35,3 +37,23 @@ class MongoInfo(BasicInfo):
             return data["isOpen"]
         else:
             return data
+
+    def classification(self, code=None, classification=None):
+        conditions = list(chain(iter_pairs('code', code), iter_pairs("classification", classification)))
+        if len(conditions) == 0:
+            _filter = {}
+        elif len(conditions) == 1:
+            _filter = conditions[0]
+        else:
+            _filter = {"$or": conditions}
+        return read(self.db["classification"], None, filter=_filter)
+
+
+def iter_pairs(name, value):
+    if isinstance(value, six.string_types):
+        yield {name: value}
+    elif isinstance(value, Iterable):
+        for v in value:
+            yield {name: v}
+    else:
+        return
