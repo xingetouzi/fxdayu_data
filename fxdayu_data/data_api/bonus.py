@@ -34,7 +34,8 @@ def calculate(series, candle):
         for start, end, value in locate_range(series, start, end):
             adjust_price(candle, value, start, end)
     else:
-        candle *= series.iloc[-1]
+        if len(series):
+            candle *= series.iloc[-1]
 
     return candle
 

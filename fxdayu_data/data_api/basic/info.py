@@ -7,7 +7,7 @@ class BasicInfo(BasicConfig):
     def codes(self, name):
         pass
 
-    def trade_days(self, start=None, end=None, length=None):
+    def trade_days(self, start=None, end=None, length=None, is_open=None):
         pass
 
     def classification(self, code=None, classification=None):

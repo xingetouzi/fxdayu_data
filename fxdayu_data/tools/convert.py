@@ -1,5 +1,6 @@
 from datetime import datetime
 import pandas as pd
+import six
 
 
 class IntTime(object):
@@ -27,3 +28,8 @@ class IntTime(object):
         for num in self.mod:
             start *= num
             yield start
+
+
+
+def convert_time(time):
+    return pd.to_datetime(time) if isinstance(time, six.string_types) else time

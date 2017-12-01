@@ -19,7 +19,7 @@ setup(
               "fxdayu_data.costume.mongo",
               "fxdayu_data.tools"],
     install_requires=REQUIRES,
-    entry_points={"console_scripts": ["DataAPI = fxdayu_data.api_console:config"]},
+    entry_points={"console_scripts": ["DataAPI = fxdayu_data.entry_point:api"]},
     url="https://github.com/cheatm/fxdayu_data.git",
     license="Apache License v2",
     author="Cam",

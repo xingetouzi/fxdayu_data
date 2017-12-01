@@ -1,11 +1,11 @@
 # encoding:utf-8
 import os
-from fxdayu_data import DataConfig
+from fxdayu_data import config
 from fxdayu_data.data_api.basic.info import BasicInfo
 
 __all__ = ["init_config", "set_file", "candle", "factor", "get", "MarketIndex"]
 
-FILE = DataConfig.get()
+FILE = config.get()
 
 
 def exec_config_file():
@@ -21,7 +21,7 @@ def init_config():
 
 
 def use(name):
-    set_file(DataConfig.get(name))
+    set_file(config.get(name))
 
 
 def set_file(file_path):

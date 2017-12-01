@@ -6,11 +6,11 @@ from fxdayu_data.data_api import mongo
 
 client = MongoClient()
 
-candle = mongo.candle(client, "adjust", H="Stock_H", D="Stock_D")
+bonus = mongo.bonus(client, "bonus")
+
+candle = mongo.candle(client, bonus, H="Stock_H", D="Stock_D")
 
 factor = mongo.factor(client, "factor")
-
-bonus = mongo.bonus(client, "bonus")
 
 info = mongo.info(client, "info")
 """

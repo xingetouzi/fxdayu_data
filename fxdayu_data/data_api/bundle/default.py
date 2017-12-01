@@ -56,6 +56,11 @@ def candle(bonus, index="datetime", **kwargs):
     )
 
 
+def info(path):
+    from fxdayu_data.data_api.bundle.info import FileInfo
+
+    return FileInfo(path)
+
 
 if __name__ == '__main__':
     b = bonus("D:\\bundle.2017-11-30\\bonus.bcolz")
