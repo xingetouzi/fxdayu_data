@@ -55,8 +55,3 @@ class FileInfo(BasicInfo):
 
     def read_trade_days(self):
         return pd.read_csv(self._trade_days, index_col="datetime").rename_axis(pd.to_datetime)
-
-
-if __name__ == '__main__':
-    info = Info("D:\\bundle.2017-11-30\info")
-    print(info.codes('hs300'))

@@ -61,9 +61,3 @@ def info(path):
 
     return FileInfo(path)
 
-
-if __name__ == '__main__':
-    b = bonus("D:\\bundle.2017-11-30\\bonus.bcolz")
-    c = candle(b, D="D:\\bundle.2017-11-30\Stock_D.bcolz")
-    print(c.__call__("000001.XSHE", "D", adjust="after"))
-
