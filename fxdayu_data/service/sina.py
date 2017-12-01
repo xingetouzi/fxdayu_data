@@ -129,7 +129,7 @@ class StockMemory(object):
 
     def recharge(self):
         code = self.code
-        candle = self.db.read(code)
+        candle = self.db.read_adjus(code)
         if len(candle):
             last_time = candle.index[-1]
             delta = datetime.now() - last_time

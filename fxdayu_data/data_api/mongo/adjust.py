@@ -17,4 +17,4 @@ class Adjust(BasicAdjust):
         self._db = db
 
     def read(self, code):
-        return read(self._db[code], index=self.index)[self.name]
+        return read(self._db[code], index=self.index, projection=[self.index, self.name])[self.name]

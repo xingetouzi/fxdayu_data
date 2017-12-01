@@ -27,7 +27,7 @@ class Candle(BasicCandle):
         self.adjust = adjust
 
     def read(self, handler, db, symbol, fields, start, end, length, adjust):
-        data = handler.read(symbol, start=start, end=end, length=length)
+        data = handler.read_adjus(symbol, start=start, end=end, length=length)
 
         if adjust:
             if "volume" in data.columns:

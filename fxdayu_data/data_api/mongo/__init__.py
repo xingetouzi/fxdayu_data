@@ -9,7 +9,7 @@ def candle(client, adj, **kwargs):
     from fxdayu_data.data_api.candle import Candle
 
     return Candle(
-        adjust=Adjust(client[adj]) if adj else None,
+        adjust=Adjust(client[adj]) if isinstance(adj, str) else adj,
         **{freq: MongoReader(client[db]) for freq, db in kwargs.items()}
     )
 
@@ -24,10 +24,10 @@ def info(client, db):
     return MongoInfo(client[db])
 
 
-def bonus(client, db, index='ex_date'):
-    from fxdayu_data.data_api.factor import Factor
+def bonus(client, db, index='ex_date', adjust="ex_cum_factor"):
+    from fxdayu_data.data_api.bonus import Bonus
 
-    return Factor(MongoReader(client[db], index))
+    return Bonus(MongoReader(client[db], index), adjust)
 
 
 __all__ = ["Candle", "Factor", "Adjust", "MongoInfo"]

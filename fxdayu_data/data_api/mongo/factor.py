@@ -19,7 +19,7 @@ class Factor(BasicFactor):
 
     @lru_cache(128)
     def read(self, symbols, fields=None, start=None, end=None, length=None):
-        return self.handler.read(symbols, start=start, end=end, length=length)
+        return self.handler.read_adjus(symbols, start=start, end=end, length=length)
 
     def __call__(self, symbols, fields=None, start=None, end=None, length=None):
         return self.read(*normalize(symbols, fields, start, end, length))
