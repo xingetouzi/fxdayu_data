@@ -9,7 +9,6 @@ setup(
     version="0.2.6",
     packages=["fxdayu_data",
               "fxdayu_data.handler",
-              "fxdayu_data.collector",
               "fxdayu_data.data_api",
               "fxdayu_data.data_api.basic",
               "fxdayu_data.data_api.mongo",
