@@ -16,20 +16,18 @@ info = mongo.info(client, "info")
 """
 
 BUNDLECONFIG = """# encoding:utf-8
-from fxdayu_data.data_api import bundle
+from fxdayu_data.data_api.bundle import default
 import os
 
-home = os.path.split(FILE)[0]
+ROOT = os.path.split(globals()["FILE"])[0]
 
-candle = bundle.candle(
-    os.path.join(home, "ex_cum_factor.bcolz"),
-    D=os.path.join(home, "Stock_D.bcolz"),
-    H=os.path.join(home, "Stock_H1.bcolz")
-)
+bonus = default.bonus(os.path.join(ROOT, "bonus.bcolz"))
 
-factor = bundle.factor(os.path.join(home, "factors.bcolz"))
+candle = default.candle(bonus, D=os.path.join(ROOT, "Stock_D.bcolz"))
 
-info = bundle.info(os.path.join(home, "info"))
+factor = default.factor(os.path.join(ROOT, "factor.bcolz"))
+
+info = default.info(os.path.join(ROOT, "info"))
 """
 
 defaults = {
