@@ -44,7 +44,7 @@ class Candle(BasicCandle):
     def set_adjust(self, adjust):
         self.adjust = adjust
 
-    def __call__(self, symbols, freq, fields=None, start=None, end=None, length=None, adjust=None):
+    def __call__(self, symbols, freq="D", fields=None, start=None, end=None, length=None, adjust=None):
         return self.read(*normalize(symbols, freq, fields, start, end, length, adjust))
 
     @lru_cache(128)

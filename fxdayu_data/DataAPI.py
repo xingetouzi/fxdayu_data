@@ -30,7 +30,7 @@ def set_file(file_path):
     init_config()
 
 
-def candle(symbols, freq, fields=None, start=None, end=None, length=None, adjust=None):
+def candle(symbols, freq="D", fields=None, start=None, end=None, length=None, adjust=None):
     """
 
     :param symbols: str | tuple(str) | hashable array
