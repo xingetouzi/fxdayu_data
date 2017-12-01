@@ -1,3 +1,6 @@
+import os
+
+
 DEFAULT = "main"
 
 
@@ -16,16 +19,17 @@ def get(name=DEFAULT):
 
 
 def get_root():
-    import os
     root = os.environ.get("fxdayu", os.path.expanduser(os.path.join('~', '.fxdayu')))
     if not os.path.exists(root):
         os.makedirs(root)
     return root
 
 
-def config_paths_file():
-    import os
+def default_bundle_path():
+    return os.path.join(get_root(), "bundle")
 
+
+def config_paths_file():
     root = get_root()
     return os.path.join(root, 'DataAPIConfig.json')
 
