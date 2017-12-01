@@ -46,7 +46,4 @@ api = click.Group(
 )
 
 if __name__ == '__main__':
-    import sys
-
-    sys.argv.extend("extract D:/WorkingArea/bundle.2017-12-01.tar.gz".split(" "))
     api()
