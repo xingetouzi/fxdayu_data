@@ -61,12 +61,14 @@ class BLPTable(BasicReader):
         else:
             return slice(head, tail)
 
-
-class HandlerTable(BLPTable):
-
-     def __init__(self, rootdir, index, handler):
-         super(HandlerTable, self).__init__(rootdir, index)
-         self.handler = handler
-
-     def read(self, name, fields=None, start=None, end=None, length=None):
-         return self.handler(super(HandlerTable, self).read(name, fields, start, end, length))
+#
+# class ConvertTable(BLPTable):
+#
+#      def __init__(self, rootdir, index, convert_input=None, convert_output=None):
+#          super(ConvertTable, self).__init__(rootdir, index)
+#          self.co = convert_output
+#          self.ci = convert_input
+#
+#      def read(self, name, fields=None, start=None, end=None, length=None):
+#
+#          return self.handler(super(ConvertTable, self).read(name, fields, start, end, length))

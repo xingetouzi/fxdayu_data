@@ -1,5 +1,6 @@
 from fxdayu_data import DataAPI
 
-print(DataAPI.candle("600000.XSHG", "D"))
+print(DataAPI.FILE)
+print(DataAPI.factor("600000.XSHG", start="2016-01-01", length=10))
 
 

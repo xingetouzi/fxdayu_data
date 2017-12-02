@@ -1,9 +1,12 @@
 from fxdayu_data.tools.convert import IntTime
+from fxdayu_data.handler.bundle import BLPTable
+from datetime import datetime
 import numpy as np
 import pandas as pd
 
 
 it = IntTime(1, 100, 100, 100, 100, 100, 1000000)
+TT = list(reversed(it.d))
 
 
 def convert_ints(sequence):
@@ -12,6 +15,14 @@ def convert_ints(sequence):
 
 def convert_times(sequence):
     return list(map(it.trans, sequence))
+
+
+def time2int(time):
+    return sum(map(mult, time.timetuple(), TT))
+
+
+def mult(a, b):
+    return a*b
 
 
 def convert_frame(frame):
@@ -30,29 +41,47 @@ def convert_bonus(frame):
     ).replace(0, np.NaN)
 
 
+class ConvertTable(BLPTable):
+
+    def read(self, name, fields=None, start=None, end=None, length=None):
+        if isinstance(start, datetime):
+            start = time2int(start)
+
+        if isinstance(end, datetime):
+            end = time2int(end)
+
+        return super(ConvertTable, self).read(name, fields, start, end, length)
+
+    def _read(self, name, columns, start, end, length):
+        return convert_frame(super(ConvertTable, self)._read(name, columns, start, end, length))
+
+
+class BonusTable(ConvertTable):
+
+    def _read(self, name, columns, start, end, length):
+        return convert_bonus(BLPTable._read(self, name, columns, start, end, length))
+
+
 def factor(path, index="datetime"):
     from fxdayu_data.data_api.factor import Factor
-    from fxdayu_data.handler.bundle import HandlerTable
 
-    reader = HandlerTable(path, index, convert_frame)
+    reader = ConvertTable(path, index)
     return Factor(reader)
 
 
 def bonus(path, index="ex_date", adjust="ex_cum_factor"):
     from fxdayu_data.data_api.bonus import Bonus
-    from fxdayu_data.handler.bundle import HandlerTable
 
-    reader = HandlerTable(path, index, convert_bonus)
+    reader = BonusTable(path, index)
     return Bonus(reader, adjust)
 
 
 def candle(bonus, index="datetime", **kwargs):
     from fxdayu_data.data_api.candle import Candle
-    from fxdayu_data.handler.bundle import HandlerTable
 
     return Candle(
         bonus,
-        **{freq: HandlerTable(path, index, convert_frame) for freq, path in kwargs.items()}
+        **{freq: ConvertTable(path, index) for freq, path in kwargs.items()}
     )
 
 
