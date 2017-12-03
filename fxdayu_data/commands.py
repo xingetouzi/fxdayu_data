@@ -99,9 +99,12 @@ def extract(source, target, name="bundle", ignore=False):
         use(name)
 
 
-def download(url, target=None):
+def download(url=None, target=None):
     import requests
     import click
+
+    if url is None:
+        url = config.BUNDLE_URL
 
     response = requests.get(url, stream=True)
     size = int(response.headers.get("content-length"))
@@ -120,9 +123,12 @@ def download(url, target=None):
     return target
 
 
-def update():
+def update(target=None):
+    if target is None:
+        target = config.default_bundle_path()
+
     tf_path = download(config.BUNDLE_URL)
-    extract(tf_path, config.default_bundle_path())
+    extract(tf_path, target)
     os.remove(tf_path)
 
 
