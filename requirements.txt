@@ -7,3 +7,4 @@ lxml>=3.7.3
 pandas-datareader>=0.2.1
 click>=6.7
 backports.functools_lru_cache>=1.4
+bcolz==1.1.2
