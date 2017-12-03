@@ -23,8 +23,8 @@ ARGS_NAME = click.Argument(["name"], nargs=1)
 ARGS_NAMES = click.Argument(["names"], nargs=-1)
 ARGS_ARGUMENTS = click.Argument(["arguments"], nargs=-1)
 ARGS_SOURCE = click.Argument(['source'], nargs=1)
-ARGS_TARGET = click.Argument(['target'], nargs=1, default=None)
-ARGS_BUNEL_URL = click.Argument(["url"], nargs=1, default=None)
+ARGS_TARGET = click.Argument(['target'], nargs=1, default=None, required=False)
+ARGS_BUNEL_URL = click.Argument(["url"], nargs=1, default=None, required=False)
 
 
 api = click.Group(

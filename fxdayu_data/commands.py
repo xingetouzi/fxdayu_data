@@ -83,14 +83,17 @@ def execute(arguments):
     print(DataAPI.get(func, *args, **kwargs))
 
 
-def extract(source, target, name="bundle", ignore=False):
+def extract(source, target=None, name="bundle", ignore=False):
     from tarfile import TarFile
+
+    if target is None:
+        target = config.default_bundle_path()
 
     os.makedirs(target, exist_ok=True)
 
     print("Extracting bundle to %s" % target)
 
-    tf = TarFile.open(source)
+    tf = TarFile.open(source, "r:gz")
     tf.extractall(target)
     tf.close()
 
