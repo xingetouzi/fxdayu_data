@@ -99,9 +99,32 @@ def extract(source, target, name="bundle", ignore=False):
         use(name)
 
 
-__all__ = ["add", "use", "delete", "show", "export", "execute", "extract"]
+def download(url, target=None):
+    import requests
+    import click
+
+    response = requests.get(url, stream=True)
+    size = int(response.headers.get("content-length"))
+
+    if target is None:
+        target = os.path.split(url)[1]
+
+    tf = open(target, "wb")
+
+    with click.progressbar(length=size, label="Downloading") as bar:
+        for data in response.iter_content(8192):
+            tf.write(data)
+            bar.update(len(data))
+
+    tf.close()
+    return target
 
 
-if __name__ == '__main__':
-    target = os.path.join(config.get_root(), "bundle")
-    extract("D:/WorkingArea/bundle.2017-11-30.tar.gz", target)
+def update():
+    tf_path = download(config.BUNDLE_URL)
+    extract(tf_path, config.default_bundle_path())
+    os.remove(tf_path)
+
+
+__all__ = ["add", "use", "delete", "show", "export", "execute", "extract", "download", "update"]
+

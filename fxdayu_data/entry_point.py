@@ -24,6 +24,7 @@ ARGS_NAMES = click.Argument(["names"], nargs=-1)
 ARGS_ARGUMENTS = click.Argument(["arguments"], nargs=-1)
 ARGS_SOURCE = click.Argument(['source'], nargs=1)
 ARGS_TARGET = click.Argument(['target'], nargs=1, default=config.default_bundle_path())
+ARGS_BUNEL_URL = click.Argument(["url"], nargs=1, default=config.BUNDLE_URL)
 
 
 api = click.Group(
@@ -41,7 +42,10 @@ api = click.Group(
         "exec": click.Command("exec", callback=execute, params=[ARGS_ARGUMENTS],
                               short_help="Execute DataAPI functions."),
         "extract": click.Command("extract", callback=extract, short_help="Extract compressed file as data.",
-                                 params=[OPTION_NAME_BUNDLE, OPTION_IGNORE, ARGS_SOURCE, ARGS_TARGET])
+                                 params=[OPTION_NAME_BUNDLE, OPTION_IGNORE, ARGS_SOURCE, ARGS_TARGET]),
+        "download": click.Command("download", callback=download, short_help="Download bundle data.",
+                                  params=[ARGS_BUNEL_URL, ARGS_TARGET]),
+        "update": click.Command("update", callback=update, short_help="Update bundle data.")
     }
 )
 

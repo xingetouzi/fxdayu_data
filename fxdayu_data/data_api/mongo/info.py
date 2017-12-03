@@ -39,14 +39,22 @@ class MongoInfo(BasicInfo):
             return data
 
     def classification(self, code=None, classification=None):
-        conditions = list(chain(iter_pairs('code', code), iter_pairs("classification", classification)))
-        if len(conditions) == 0:
-            _filter = {}
-        elif len(conditions) == 1:
-            _filter = conditions[0]
-        else:
-            _filter = {"$or": conditions}
-        return read(self.db["classification"], None, filter=_filter)
+        return read(self.db["classification"], None,
+                    filter=create_filter(code=code, classification=classification))
+
+    def factor_description(self, name=None, classification=None):
+        return read(self.db["factor_description"], None,
+                    filter=create_filter(name=name, classification=classification))
+
+
+def create_filter(**kwargs):
+    conditions = list(chain(*[iter_pairs(key, value) for key, value in kwargs.items()]))
+    if len(conditions) == 0:
+        return {}
+    elif len(conditions) == 1:
+        return conditions[0]
+    else:
+        return {"$or": conditions}
 
 
 def iter_pairs(name, value):

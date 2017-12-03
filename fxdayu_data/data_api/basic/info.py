@@ -12,3 +12,6 @@ class BasicInfo(BasicConfig):
 
     def classification(self, code=None, classification=None):
         pass
+
+    def factor_description(self, name=None, classification=None):
+        pass
