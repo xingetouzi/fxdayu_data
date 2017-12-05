@@ -2,7 +2,7 @@ import os
 
 
 DEFAULT = "main"
-BUNDLE_URL = "http://p065psqpy.bkt.clouddn.com/bundle.tar.gz"
+BUNDLE_URL = "http://p065psqpy.bkt.clouddn.com/data_bundle.tar.gz"
 
 
 def get(name=DEFAULT):
