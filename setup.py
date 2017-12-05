@@ -6,7 +6,7 @@ REQUIRES = open("requirements.txt").readlines()
 
 setup(
     name="fxdayu_data",
-    version="0.2.6.4",
+    version="0.2.6.6",
     packages=["fxdayu_data",
               "fxdayu_data.handler",
               "fxdayu_data.data_api",

@@ -1,5 +1,3 @@
-from fxdayu_data.data_api.mongo.candle import Candle
-from fxdayu_data.data_api.mongo.factor import Factor
 from fxdayu_data.data_api.mongo.adjust import Adjust
 from fxdayu_data.data_api.mongo.info import MongoInfo
 from fxdayu_data.data_api.mongo.reader import MongoReader
@@ -30,15 +28,23 @@ def bonus(client, db, index='ex_date', adjust="ex_cum_factor"):
     return Bonus(MongoReader(client[db], index), adjust)
 
 
-__all__ = ["Candle", "Factor", "Adjust", "MongoInfo"]
-
-
-if __name__ == '__main__':
+def template(url, **db):
     from pymongo import MongoClient
 
-    b = bonus(
-        MongoClient("192.168.0.101"),
-        "bonus"
-    )
+    client = MongoClient(url)
+    db.setdefault("D", "Stock_D")
 
-    print(b("000157.XSHE"))
+    _bonus = bonus(client, db.pop("bonus", "bonus"))
+    _factor = factor(client, db.pop("factor", "factor"))
+    _info = MongoInfo(client[db.pop("info", "info")])
+    _candle = candle(client, _bonus, **db)
+
+    return {
+        "candle": _candle,
+        "bonus": _bonus,
+        "factor": _factor,
+        "_info": _info
+    }
+
+
+__all__ = ["candle", "factor", "adjust", "info", "default"]
