@@ -1,7 +1,7 @@
 # encoding:utf-8
 MONGOCONFIG = """# encoding:utf-8
 from fxdayu_data.data_api import mongo
-globals().update(mongo.default(
+globals().update(mongo.template(
     url="mongodb://localhost:27017",
 ))
 """
