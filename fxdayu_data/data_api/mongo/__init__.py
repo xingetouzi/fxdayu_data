@@ -47,4 +47,4 @@ def template(url, **db):
     }
 
 
-__all__ = ["candle", "factor", "adjust", "info", "default"]
+__all__ = ["candle", "factor", "adjust", "info", "template"]

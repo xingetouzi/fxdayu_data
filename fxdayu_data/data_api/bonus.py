@@ -2,7 +2,6 @@ from fxdayu_data.data_api.factor import Factor
 import pandas as pd
 
 
-
 class Bonus(Factor):
 
     def __init__(self, reader, adjust="ex_cum_factor"):

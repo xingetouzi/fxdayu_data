@@ -106,3 +106,6 @@ def template(root, **dirs):
         "info": _info,
         "bonus": _bonus
     }
+
+
+__all__ = ["candle", "factor", "bonus", "info", "template"]

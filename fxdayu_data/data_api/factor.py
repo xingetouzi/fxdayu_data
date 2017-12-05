@@ -1,4 +1,3 @@
-from fxdayu_data.data_api.basic.factor import BasicFactor
 from fxdayu_data.data_api import lru_cache
 from collections import Iterable
 import pandas as pd
@@ -22,7 +21,7 @@ def normalize(symbols, fields, start, end, length):
             length)
 
 
-class Factor(BasicFactor):
+class Factor(object):
 
     def __init__(self, reader):
         self.reader = reader
