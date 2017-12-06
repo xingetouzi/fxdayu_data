@@ -58,6 +58,6 @@ class Candle(object):
 
     def _read(self, reader, symbol, fields, start, end, length, adjust):
         if not adjust:
-            return reader.read(symbol, fields, start, end, length)
+            return reader.read(symbol, fields, start, end, length).round(2)
         else:
-            return self.adjust.cal(symbol, reader.read(symbol, fields, start, end, length), adjust)
+            return self.adjust.cal(symbol, reader.read(symbol, fields, start, end, length), adjust).round(2)
