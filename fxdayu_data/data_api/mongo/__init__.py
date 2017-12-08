@@ -43,7 +43,7 @@ def template(url, **db):
         "candle": _candle,
         "bonus": _bonus,
         "factor": _factor,
-        "_info": _info
+        "info": _info
     }
 
 
